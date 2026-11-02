@@ -28,6 +28,7 @@ Un importateur du marché de Madina (Conakry, Guinée) fait venir des conteneurs
 - **Statut de paiement** (client ou facture) : `Soldé` (tout payé), `Partiel`, `Impayé`.
 - **Ancienneté d'une facture impayée** : 0–30 jours, 31–60, 61–90, plus de 90.
 - **Limite de crédit** : alerte quand ce que doit un client dépasse sa limite.
+- **Paiement d'une facture à plusieurs conteneurs** : il est réparti entre les lignes **au prorata** de leur montant. Ce qui est payé en trop (après un avoir sur une facture déjà réglée) est un crédit pour le client, pas une recette du conteneur.
 
 ### Retours et avoirs
 Trois cas :
@@ -68,3 +69,10 @@ On ne la copie pas. On conçoit **nos propres interfaces et notre propre expéri
 
 ## Stack du développeur
 Python, Django, FastAPI, React.js, React Native, Tailwind CSS. Pour ce projet : **Flutter (Dart)**.
+
+## Organisation du code
+- `lib/domaine/` : modèles et calculs, en Dart pur, sans interface. Les écrans ne font qu'afficher ce que `Suivi` a calculé.
+- `lib/donnees/exemple.dart` : données d'exemple du prototype.
+- `lib/ui/` : écrans, thème (`Couleurs` : une couleur par conteneur, couleurs de statut), illustrations dessinées avec `CustomPainter`.
+- Tests : `flutter test`. Analyse : `flutter analyze`. Les deux doivent passer avant de pousser.
+- Mise en page adaptative : barre de navigation en bas sous 760 px de large, rail sur le côté au-delà.
