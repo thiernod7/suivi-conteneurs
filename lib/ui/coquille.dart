@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import 'ecrans/plus.dart';
 import 'theme.dart';
 
 class Destination {
@@ -28,13 +29,16 @@ class Coquille extends StatelessWidget {
   final Widget enfant;
 
   int get _index {
+    if (cheminsPlus.any(chemin.startsWith)) return destinations.length - 1;
     final i = destinations.lastIndexWhere((d) => d.chemin == '/' ? chemin == '/' : chemin.startsWith(d.chemin));
     return i < 0 ? 0 : i;
   }
 
   @override
   Widget build(BuildContext context) {
-    void aller(int i) => context.go(destinations[i].chemin);
+    // « Plus » n'ouvre pas d'écran : il fait monter son menu du bas.
+    void aller(int i) =>
+        destinations[i].chemin == '/plus' ? ouvrirMenuPlus(context) : context.go(destinations[i].chemin);
     // L'icône du bouton choisi est pleine, les autres sont en trait fin.
     Widget icone(Destination d, {bool choisie = false}) => Icon(d.icone, fill: choisie ? 1 : 0, weight: 300);
     final trait = BorderSide(color: context.couleurs.trait, width: .8);
@@ -56,22 +60,28 @@ class Coquille extends StatelessWidget {
       );
     }
     return Scaffold(
-      body: Row(children: [
-        DecoratedBox(
-          decoration: BoxDecoration(border: Border(right: trait)),
-          child: NavigationRail(
-            selectedIndex: _index,
-            onDestinationSelected: aller,
-            labelType: NavigationRailLabelType.all,
-            groupAlignment: -.9,
-            destinations: [
-              for (final d in destinations)
-                NavigationRailDestination(icon: icone(d), selectedIcon: icone(d, choisie: true), label: Text(d.libelle)),
-            ],
+      body: Row(
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(border: Border(right: trait)),
+            child: NavigationRail(
+              selectedIndex: _index,
+              onDestinationSelected: aller,
+              labelType: NavigationRailLabelType.all,
+              groupAlignment: -.9,
+              destinations: [
+                for (final d in destinations)
+                  NavigationRailDestination(
+                    icon: icone(d),
+                    selectedIcon: icone(d, choisie: true),
+                    label: Text(d.libelle),
+                  ),
+              ],
+            ),
           ),
-        ),
-        Expanded(child: enfant),
-      ]),
+          Expanded(child: enfant),
+        ],
+      ),
     );
   }
 }

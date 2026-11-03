@@ -2,71 +2,92 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../composants.dart';
 import '../format.dart';
 import '../suivi_scope.dart';
 import '../theme.dart';
 
-/// Le menu « Plus » : tout ce qui n'a pas sa place dans la barre du bas.
-class EcranPlus extends StatelessWidget {
-  const EcranPlus({super.key});
+/// Les écrans qu'on ouvre depuis « Plus ». Le bouton Plus reste en avant quand on y est.
+const cheminsPlus = ['/produits', '/paiements', '/retours', '/fournisseurs'];
+
+/// Le menu « Plus » : un panneau qui monte du bas, par-dessus l'écran.
+Future<void> ouvrirMenuPlus(BuildContext context) => showModalBottomSheet<void>(
+  context: context,
+  showDragHandle: true,
+  useSafeArea: true,
+  isScrollControlled: true,
+  constraints: const BoxConstraints(maxWidth: 640),
+  builder: (_) => const _MenuPlus(),
+);
+
+class _MenuPlus extends StatelessWidget {
+  const _MenuPlus();
 
   @override
   Widget build(BuildContext context) {
     final suivi = SuiviScope.of(context);
-    final nbProduits = suivi.conteneurs.fold(0, (s, c) => s + c.produits.length);
+    final depot = SuiviScope.depot(context);
+    final c = context.couleurs;
+    final nbProduits = suivi.conteneurs.fold(0, (s, k) => s + k.produits.length);
     final paiements = suivi.donnees.paiements;
     final recu = paiements.fold(0, (s, p) => s + p.montant);
-    final fournisseurs = {for (final c in suivi.conteneurs) c.conteneur.fournisseur};
-    final c = context.couleurs;
+    final fournisseurs = {for (final k in suivi.conteneurs) k.conteneur.fournisseur};
+    final sombre = Theme.of(context).brightness == Brightness.dark;
 
-    Widget ligne(IconData icone, String titre, String detail, String chemin) => InkWell(
-          onTap: () => context.push(chemin),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(children: [
-              Icon(icone, size: 26),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(titre, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
-                  Text(detail, style: TextStyle(color: c.muet, fontSize: 14)),
-                ]),
-              ),
-              Icon(Symbols.chevron_right, color: c.muet),
-            ]),
-          ),
+    Widget ligne(IconData icone, String titre, {String? detail, Color? couleur, required VoidCallback onTap}) =>
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+          leading: Icon(icone, size: 28, color: couleur),
+          title: Text(titre, style: TextStyle(fontSize: 18, color: couleur)),
+          subtitle: detail == null ? null : Text(detail, style: TextStyle(color: c.muet, fontSize: 14)),
+          onTap: onTap,
         );
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Plus')),
-      body: PageContenu(enfants: [
-        CarteListe(lignes: [
-          ligne(Symbols.inventory_2, 'Produits', '$nbProduits produits', '/plus/produits'),
-          ligne(Symbols.payments, 'Paiements', '${paiements.length} paiements · ${court(recu)} GNF', '/plus/paiements'),
-          ligne(Symbols.undo, 'Retours', '${suivi.avoirs.length} retours', '/plus/retours'),
-          ligne(Symbols.local_shipping, 'Fournisseurs', '${fournisseurs.length} fournisseurs', '/plus/fournisseurs'),
-        ]),
-        const SizedBox(height: 24),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => _remettre(context),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(children: [
-                Icon(Symbols.restart_alt, color: c.alerte),
-                const SizedBox(width: 16),
-                Expanded(child: Text('Remettre les exemples', style: TextStyle(fontSize: 17, color: c.alerte))),
-              ]),
-            ),
+    // On ferme le panneau, puis on va à l'écran choisi.
+    void aller(String chemin) {
+      Navigator.pop(context);
+      context.go(chemin);
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ligne(Symbols.inventory_2, 'Produits', detail: '$nbProduits produits', onTap: () => aller('/produits')),
+          ligne(
+            Symbols.payments,
+            'Paiements',
+            detail: '${paiements.length} paiements · ${court(recu)} GNF',
+            onTap: () => aller('/paiements'),
           ),
-        ),
-      ]),
+          ligne(Symbols.undo, 'Retours', detail: '${suivi.avoirs.length} retours', onTap: () => aller('/retours')),
+          ligne(
+            Symbols.local_shipping,
+            'Fournisseurs',
+            detail: '${fournisseurs.length} fournisseurs',
+            onTap: () => aller('/fournisseurs'),
+          ),
+          const Divider(indent: 24, endIndent: 24, height: 24),
+          ligne(
+            sombre ? Symbols.light_mode : Symbols.dark_mode,
+            sombre ? 'Mode clair' : 'Mode sombre',
+            onTap: () => depot.changerTheme(sombre ? ThemeMode.light : ThemeMode.dark),
+          ),
+          ligne(
+            Symbols.restart_alt,
+            'Remettre les exemples',
+            detail: 'Efface ce qui a été ajouté',
+            couleur: c.alerte,
+            onTap: () => _remettre(context),
+          ),
+        ],
+      ),
     );
   }
 
   Future<void> _remettre(BuildContext context) async {
+    final depot = SuiviScope.depot(context);
+    final messager = ScaffoldMessenger.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -79,9 +100,9 @@ class EcranPlus extends StatelessWidget {
         ],
       ),
     );
-    if (ok == true && context.mounted) {
-      SuiviScope.depot(context).remettreExemples();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Exemples remis'), behavior: SnackBarBehavior.floating));
-    }
+    if (ok != true || !context.mounted) return;
+    Navigator.pop(context);
+    depot.remettreExemples();
+    messager.showSnackBar(const SnackBar(content: Text('Exemples remis'), behavior: SnackBarBehavior.floating));
   }
 }

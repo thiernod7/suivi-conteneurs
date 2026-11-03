@@ -12,7 +12,6 @@ import 'ui/ecrans/conteneurs.dart';
 import 'ui/ecrans/facture.dart';
 import 'ui/ecrans/fournisseurs.dart';
 import 'ui/ecrans/paiements.dart';
-import 'ui/ecrans/plus.dart';
 import 'ui/ecrans/produits.dart';
 import 'ui/ecrans/retours.dart';
 import 'ui/formulaires/client.dart';
@@ -61,16 +60,11 @@ GoRouter creerRouteur() => GoRouter(
             ),
           ],
         ),
-        GoRoute(
-          path: '/plus',
-          builder: (_, _) => const EcranPlus(),
-          routes: [
-            GoRoute(path: 'produits', builder: (_, _) => const EcranProduits()),
-            GoRoute(path: 'paiements', builder: (_, _) => const EcranPaiements()),
-            GoRoute(path: 'retours', builder: (_, _) => const EcranRetours()),
-            GoRoute(path: 'fournisseurs', builder: (_, _) => const EcranFournisseurs()),
-          ],
-        ),
+        // Les écrans du menu « Plus ».
+        GoRoute(path: '/produits', builder: (_, _) => const EcranProduits()),
+        GoRoute(path: '/paiements', builder: (_, _) => const EcranPaiements()),
+        GoRoute(path: '/retours', builder: (_, _) => const EcranRetours()),
+        GoRoute(path: '/fournisseurs', builder: (_, _) => const EcranFournisseurs()),
       ],
     ),
     // Les formulaires d'ajout s'ouvrent en plein écran, par-dessus la barre du bas.
@@ -138,15 +132,19 @@ class _ApplicationState extends State<Application> {
   @override
   Widget build(BuildContext context) => SuiviScope(
     depot: widget.depot,
-    child: MaterialApp.router(
-      title: 'Mes conteneurs',
-      debugShowCheckedModeBanner: false,
-      theme: theme(Brightness.light),
-      darkTheme: theme(Brightness.dark),
-      locale: const Locale('fr'),
-      supportedLocales: const [Locale('fr')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      routerConfig: _routeur,
+    child: ListenableBuilder(
+      listenable: widget.depot,
+      builder: (context, _) => MaterialApp.router(
+        title: 'Mes conteneurs',
+        debugShowCheckedModeBanner: false,
+        theme: theme(Brightness.light),
+        darkTheme: theme(Brightness.dark),
+        themeMode: widget.depot.modeTheme,
+        locale: const Locale('fr'),
+        supportedLocales: const [Locale('fr')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        routerConfig: _routeur,
+      ),
     ),
   );
 }

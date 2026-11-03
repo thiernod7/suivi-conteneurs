@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domaine/calculs.dart';
@@ -18,6 +19,7 @@ class Depot extends ChangeNotifier {
   }
 
   static const _cle = 'suivi_conteneurs.donnees';
+  static const _cleTheme = 'suivi_conteneurs.theme';
 
   /// Lit les données gardées sur l'appareil, ou prend les données d'exemple la première fois.
   static Future<Depot> charger(DateTime aujourdhui) async {
@@ -31,7 +33,8 @@ class Depot extends ChangeNotifier {
         debugPrint('Données illisibles, on reprend les exemples : $e');
       }
     }
-    return Depot(donnees, aujourdhui: aujourdhui, stockage: stockage);
+    return Depot(donnees, aujourdhui: aujourdhui, stockage: stockage)
+      .._modeTheme = ThemeMode.values.asNameMap()[stockage.getString(_cleTheme)] ?? ThemeMode.system;
   }
 
   final DateTime aujourdhui;
@@ -40,6 +43,17 @@ class Depot extends ChangeNotifier {
   late Suivi _suivi;
 
   Donnees get donnees => _donnees;
+
+  /// Clair, sombre, ou comme le téléphone.
+  ThemeMode get modeTheme => _modeTheme;
+  var _modeTheme = ThemeMode.system;
+
+  void changerTheme(ThemeMode mode) {
+    _modeTheme = mode;
+    _stockage?.setString(_cleTheme, mode.name);
+    notifyListeners();
+  }
+
   Suivi get suivi => _suivi;
 
   void _remplacer(Donnees d, {bool sauver = true}) {
@@ -57,21 +71,22 @@ class Depot extends ChangeNotifier {
     List<Facture>? factures,
     List<Paiement>? paiements,
     List<Avoir>? avoirs,
-  }) =>
-      Donnees(
-        conteneurs: conteneurs ?? _donnees.conteneurs,
-        clients: clients ?? _donnees.clients,
-        factures: factures ?? _donnees.factures,
-        paiements: paiements ?? _donnees.paiements,
-        avoirs: avoirs ?? _donnees.avoirs,
-      );
+  }) => Donnees(
+    conteneurs: conteneurs ?? _donnees.conteneurs,
+    clients: clients ?? _donnees.clients,
+    factures: factures ?? _donnees.factures,
+    paiements: paiements ?? _donnees.paiements,
+    avoirs: avoirs ?? _donnees.avoirs,
+  );
 
   /// Prochain numéro libre de la forme « FAC-2026-017 ».
   String _prochainNumero(String prefixe, Iterable<String> existants, DateTime date) {
     final debut = '$prefixe-${date.year}-';
     var max = 0;
     for (final n in existants) {
-      if (n.startsWith(debut)) max = [max, int.tryParse(n.substring(debut.length)) ?? 0].reduce((a, b) => a > b ? a : b);
+      if (n.startsWith(debut)) {
+        max = [max, int.tryParse(n.substring(debut.length)) ?? 0].reduce((a, b) => a > b ? a : b);
+      }
     }
     return '$debut${(max + 1).toString().padLeft(3, '0')}';
   }
@@ -160,13 +175,18 @@ class Depot extends ChangeNotifier {
     ModePaiement mode = ModePaiement.especes,
   }) {
     final numero = _prochainNumero('FAC', _donnees.factures.map((f) => f.numero), date);
-    _remplacer(_avec(
-      factures: [..._donnees.factures, Facture(numero: numero, clientId: clientId, date: date, lignes: lignes)],
-      paiements: [
-        ..._donnees.paiements,
-        if (payeMaintenant > 0) Paiement(facture: numero, date: date, montant: payeMaintenant, mode: mode),
-      ],
-    ));
+    _remplacer(
+      _avec(
+        factures: [
+          ..._donnees.factures,
+          Facture(numero: numero, clientId: clientId, date: date, lignes: lignes),
+        ],
+        paiements: [
+          ..._donnees.paiements,
+          if (payeMaintenant > 0) Paiement(facture: numero, date: date, montant: payeMaintenant, mode: mode),
+        ],
+      ),
+    );
     return numero;
   }
 
@@ -182,18 +202,29 @@ class Depot extends ChangeNotifier {
     required String motif,
   }) {
     final numero = _prochainNumero('AV', _donnees.avoirs.map((a) => a.numero), date);
-    _remplacer(_avec(avoirs: [
-      ..._donnees.avoirs,
-      Avoir(numero: numero, facture: facture, ligne: ligne, quantite: quantite, type: type, date: date, motif: motif),
-    ]));
+    _remplacer(
+      _avec(
+        avoirs: [
+          ..._donnees.avoirs,
+          Avoir(
+            numero: numero,
+            facture: facture,
+            ligne: ligne,
+            quantite: quantite,
+            type: type,
+            date: date,
+            motif: motif,
+          ),
+        ],
+      ),
+    );
     return numero;
   }
 
   // ---- modifier et supprimer
 
-  void _changerConteneur(String id, Conteneur Function(Conteneur) changer) => _remplacer(_avec(conteneurs: [
-        for (final x in _donnees.conteneurs) x.id == id ? changer(x) : x,
-      ]));
+  void _changerConteneur(String id, Conteneur Function(Conteneur) changer) =>
+      _remplacer(_avec(conteneurs: [for (final x in _donnees.conteneurs) x.id == id ? changer(x) : x]));
 
   bool numeroConteneurPrisAilleurs(String numero, String sauf) =>
       _donnees.conteneurs.any((c) => c.numero == numero && c.id != sauf);
@@ -214,31 +245,37 @@ class Depot extends ChangeNotifier {
     required int verseFournisseur,
     required Couts couts,
     required StatutConteneur statut,
-  }) =>
-      _changerConteneur(
-        id,
-        (c) => c.copyWith(
-          numero: numero,
-          type: type,
-          origine: origine,
-          arrivee: arrivee,
-          fournisseur: fournisseur,
-          verseFournisseur: verseFournisseur,
-          couts: couts,
-          statut: statut,
-        ),
-      );
+  }) => _changerConteneur(
+    id,
+    (c) => c.copyWith(
+      numero: numero,
+      type: type,
+      origine: origine,
+      arrivee: arrivee,
+      fournisseur: fournisseur,
+      verseFournisseur: verseFournisseur,
+      couts: couts,
+      statut: statut,
+    ),
+  );
 
   void supprimerConteneur(String id) {
     if (_conteneurUtilise(id)) throw StateError(raisonGarderConteneur(id)!);
-    _remplacer(_avec(conteneurs: [for (final c in _donnees.conteneurs) if (c.id != id) c]));
+    _remplacer(
+      _avec(
+        conteneurs: [
+          for (final c in _donnees.conteneurs)
+            if (c.id != id) c,
+        ],
+      ),
+    );
   }
 
   /// Pourquoi on ne peut pas supprimer ce produit, ou null si on peut.
   String? raisonGarderProduit(String produitId) =>
       _donnees.factures.any((f) => f.lignes.any((l) => l.produitId == produitId))
-          ? 'Ce produit a déjà été vendu. Supprimez d\'abord les factures qui le contiennent.'
-          : null;
+      ? 'Ce produit a déjà été vendu. Supprimez d\'abord les factures qui le contiennent.'
+      : null;
 
   void modifierProduit(
     String conteneurId,
@@ -248,17 +285,29 @@ class Depot extends ChangeNotifier {
     required int quantite,
     required int prix,
     required IconeProduit icone,
-  }) =>
-      _changerConteneur(conteneurId, (c) => c.copyWith(produits: [
-            for (final p in c.produits)
-              p.id == produitId
-                  ? Produit(id: p.id, nom: nom, unite: unite, quantiteRecue: quantite, prix: prix, icone: icone)
-                  : p,
-          ]));
+  }) => _changerConteneur(
+    conteneurId,
+    (c) => c.copyWith(
+      produits: [
+        for (final p in c.produits)
+          p.id == produitId
+              ? Produit(id: p.id, nom: nom, unite: unite, quantiteRecue: quantite, prix: prix, icone: icone)
+              : p,
+      ],
+    ),
+  );
 
   void supprimerProduit(String conteneurId, String produitId) {
     if (raisonGarderProduit(produitId) != null) throw StateError(raisonGarderProduit(produitId)!);
-    _changerConteneur(conteneurId, (c) => c.copyWith(produits: [for (final p in c.produits) if (p.id != produitId) p]));
+    _changerConteneur(
+      conteneurId,
+      (c) => c.copyWith(
+        produits: [
+          for (final p in c.produits)
+            if (p.id != produitId) p,
+        ],
+      ),
+    );
   }
 
   /// Pourquoi on ne peut pas supprimer ce client, ou null si on peut.
@@ -267,59 +316,116 @@ class Depot extends ChangeNotifier {
       : null;
 
   void modifierClient(String id, {required String nom, required String quartier, required int limiteCredit}) =>
-      _remplacer(_avec(clients: [
-        for (final k in _donnees.clients)
-          k.id == id ? k.copyWith(nom: nom, quartier: quartier, limiteCredit: limiteCredit) : k,
-      ]));
+      _remplacer(
+        _avec(
+          clients: [
+            for (final k in _donnees.clients)
+              k.id == id ? k.copyWith(nom: nom, quartier: quartier, limiteCredit: limiteCredit) : k,
+          ],
+        ),
+      );
 
   void supprimerClient(String id) {
     if (raisonGarderClient(id) != null) throw StateError(raisonGarderClient(id)!);
-    _remplacer(_avec(clients: [for (final k in _donnees.clients) if (k.id != id) k]));
+    _remplacer(
+      _avec(
+        clients: [
+          for (final k in _donnees.clients)
+            if (k.id != id) k,
+        ],
+      ),
+    );
   }
 
   /// Les lignes d'une facture ne changent plus quand elle a des retours (les retours pointent vers ses lignes).
   bool lignesBloquees(String numero) => _donnees.avoirs.any((a) => a.facture == numero);
 
-  void modifierFacture(String numero, {required String clientId, required DateTime date, required List<LigneFacture> lignes}) {
+  void modifierFacture(
+    String numero, {
+    required String clientId,
+    required DateTime date,
+    required List<LigneFacture> lignes,
+  }) {
     final ancienne = _donnees.factures.firstWhere((f) => f.numero == numero);
     if (lignesBloquees(numero) && lignes.length != ancienne.lignes.length) {
       throw StateError('Les lignes ne changent plus : il y a des retours.');
     }
-    _remplacer(_avec(factures: [
-      for (final f in _donnees.factures)
-        f.numero == numero ? Facture(numero: numero, clientId: clientId, date: date, lignes: lignes) : f,
-    ]));
+    _remplacer(
+      _avec(
+        factures: [
+          for (final f in _donnees.factures)
+            f.numero == numero ? Facture(numero: numero, clientId: clientId, date: date, lignes: lignes) : f,
+        ],
+      ),
+    );
   }
 
   /// Supprime la facture, ses paiements et ses retours.
-  void supprimerFacture(String numero) => _remplacer(_avec(
-        factures: [for (final f in _donnees.factures) if (f.numero != numero) f],
-        paiements: [for (final p in _donnees.paiements) if (p.facture != numero) p],
-        avoirs: [for (final a in _donnees.avoirs) if (a.facture != numero) a],
-      ));
+  void supprimerFacture(String numero) => _remplacer(
+    _avec(
+      factures: [
+        for (final f in _donnees.factures)
+          if (f.numero != numero) f,
+      ],
+      paiements: [
+        for (final p in _donnees.paiements)
+          if (p.facture != numero) p,
+      ],
+      avoirs: [
+        for (final a in _donnees.avoirs)
+          if (a.facture != numero) a,
+      ],
+    ),
+  );
 
   /// Les paiements n'ont pas de numéro : on les repère par leur rang dans la liste.
   int rangPaiement(Paiement p) => _donnees.paiements.indexWhere((x) => identical(x, p));
 
-  void modifierPaiement(int rang, Paiement nouveau) => _remplacer(_avec(paiements: [
-        for (final (i, p) in _donnees.paiements.indexed) i == rang ? nouveau : p,
-      ]));
+  void modifierPaiement(int rang, Paiement nouveau) =>
+      _remplacer(_avec(paiements: [for (final (i, p) in _donnees.paiements.indexed) i == rang ? nouveau : p]));
 
-  void supprimerPaiement(int rang) => _remplacer(_avec(paiements: [
+  void supprimerPaiement(int rang) => _remplacer(
+    _avec(
+      paiements: [
         for (final (i, p) in _donnees.paiements.indexed)
           if (i != rang) p,
-      ]));
+      ],
+    ),
+  );
 
-  void modifierAvoir(String numero, {required int quantite, required TypeAvoir type, required DateTime date, required String motif}) =>
-      _remplacer(_avec(avoirs: [
+  void modifierAvoir(
+    String numero, {
+    required int quantite,
+    required TypeAvoir type,
+    required DateTime date,
+    required String motif,
+  }) => _remplacer(
+    _avec(
+      avoirs: [
         for (final a in _donnees.avoirs)
           a.numero == numero
-              ? Avoir(numero: numero, facture: a.facture, ligne: a.ligne, quantite: quantite, type: type, date: date, motif: motif)
+              ? Avoir(
+                  numero: numero,
+                  facture: a.facture,
+                  ligne: a.ligne,
+                  quantite: quantite,
+                  type: type,
+                  date: date,
+                  motif: motif,
+                )
               : a,
-      ]));
+      ],
+    ),
+  );
 
-  void supprimerAvoir(String numero) =>
-      _remplacer(_avec(avoirs: [for (final a in _donnees.avoirs) if (a.numero != numero) a]));
+  void supprimerAvoir(String numero) => _remplacer(
+    _avec(
+      avoirs: [
+        for (final a in _donnees.avoirs)
+          if (a.numero != numero) a,
+      ],
+    ),
+  );
 
   /// Revient aux données d'exemple (ce qui a été ajouté est perdu).
   void remettreExemples() => _remplacer(donneesExemple);

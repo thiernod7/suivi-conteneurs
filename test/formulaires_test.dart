@@ -57,17 +57,39 @@ void main() {
 
   Future<void> enregistrer(WidgetTester tester) => toucher(tester, find.text('Enregistrer'));
 
-  testWidgets('la barre du bas a un bouton Plus, qui ouvre ses écrans', (tester) async {
+  testWidgets('Plus fait monter un menu du bas, qui ouvre ses écrans', (tester) async {
+    await ouvrir(tester);
+    for (final ecran in ['Produits', 'Paiements', 'Retours', 'Fournisseurs']) {
+      await aller(tester, 'Plus');
+      expect(find.text('Remettre les exemples'), findsOneWidget);
+      await toucher(tester, find.text(ecran));
+      // Le menu est fermé, l'écran est ouvert, et Plus reste choisi dans la barre.
+      expect(find.text('Remettre les exemples'), findsNothing);
+      expect(find.text(ecran), findsWidgets);
+      expect(tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex, 4);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('Plus : passer en mode sombre, puis en mode clair', (tester) async {
     await ouvrir(tester);
     await aller(tester, 'Plus');
-    for (final ecran in ['Produits', 'Paiements', 'Retours', 'Fournisseurs']) {
-      await toucher(tester, find.text(ecran));
-      expect(find.text(ecran), findsWidgets);
-      expect(tester.takeException(), isNull);
-      await tester.tap(find.byType(BackButton));
-      await tester.pumpAndSettle();
-    }
-    expect(find.text('Remettre les exemples'), findsOneWidget);
+    await toucher(tester, find.text('Mode sombre'));
+    expect(depot.modeTheme, ThemeMode.dark);
+    await tester.pumpAndSettle();
+    expect(find.text('Mode clair'), findsOneWidget);
+    await toucher(tester, find.text('Mode clair'));
+    expect(depot.modeTheme, ThemeMode.light);
+  });
+
+  testWidgets('Plus : remettre les exemples', (tester) async {
+    await ouvrir(tester);
+    depot.ajouterClient(nom: 'Client en trop', quartier: 'Q', limiteCredit: 1);
+    await aller(tester, 'Plus');
+    await toucher(tester, find.text('Remettre les exemples'));
+    await toucher(tester, find.text('Oui, effacer'));
+    expect(depot.suivi.clients.length, 7);
+    expect(find.text('Exemples remis'), findsOneWidget);
   });
 
   testWidgets('nouveau client', (tester) async {

@@ -48,7 +48,7 @@ On ne la copie pas. On conçoit **nos propres interfaces et notre propre expéri
 - **Conteneurs** : la liste, puis un conteneur (dépensé, vendu, on me doit, gagné ; ce qu'il y a dedans ; ses clients).
 - **Clients** : la liste, puis un client (ce qu'il a pris, dans quels conteneurs, ce qu'il doit).
 - **Factures** : la liste, puis une facture (ce qui a été pris, les paiements, ce qui reste à payer).
-- **Plus** (5e bouton) : Produits, Paiements, Retours, Fournisseurs, et « Remettre les exemples ».
+- **Plus** (5e bouton) : il n'ouvre pas d'écran, il fait **monter un menu du bas** (bottom sheet) par-dessus l'écran : Produits, Paiements, Retours, Fournisseurs (avec un petit détail sous chacun), **Mode clair / Mode sombre** (gardé sur l'appareil), et « Remettre les exemples » en rouge. Le bouton Plus reste choisi quand on est sur un de ces écrans.
 - Les rapports (impayés anciens, meilleurs clients, meilleurs produits) viennent sur l'Accueil, pas dans un écran à part.
 - **Formulaires d'ajout** (`lib/ui/formulaires/`), en plein écran : une croix pour annuler, un grand bouton **Enregistrer** en bas.
   - On les ouvre avec le gros bouton **+** en bas des listes (Nouveau conteneur, client, facture, produit, paiement, retour) ou depuis une page : Ajouter un produit (conteneur), Nouvelle facture (client), Ajouter un paiement et Retour (facture).
