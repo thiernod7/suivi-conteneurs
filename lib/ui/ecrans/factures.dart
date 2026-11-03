@@ -31,7 +31,7 @@ class _EcranFacturesState extends State<EcranFactures> {
     super.dispose();
   }
 
-  bool _garde(Suivi suivi, CalculFacture f, _Filtre filtre) {
+  bool _garde(Suivi suivi, CalculFacture f, _Filtre filtre, String? conteneur) {
     final ok = switch (filtre) {
       _Filtre.toutes => true,
       _Filtre.aPayer => f.solde > 0,
@@ -39,7 +39,7 @@ class _EcranFacturesState extends State<EcranFactures> {
       _Filtre.payees => f.solde == 0,
     };
     return ok &&
-        (_conteneur == null || f.conteneurs.contains(_conteneur)) &&
+        (conteneur == null || f.conteneurs.contains(conteneur)) &&
         correspond([
           suivi.client(f.facture.clientId).client.nom,
           f.facture.numero,
@@ -58,7 +58,7 @@ class _EcranFacturesState extends State<EcranFactures> {
   Widget build(BuildContext context) {
     final suivi = SuiviScope.of(context);
     final toutes = suivi.factures..sort((a, b) => b.facture.date.compareTo(a.facture.date));
-    final visibles = toutes.where((f) => _garde(suivi, f, _filtre)).toList();
+    final visibles = toutes.where((f) => _garde(suivi, f, _filtre, _conteneur)).toList();
     final conteneurs = [for (final c in suivi.conteneurs) c.conteneur]..sort((a, b) => b.arrivee.compareTo(a.arrivee));
 
     return Scaffold(
@@ -74,12 +74,16 @@ class _EcranFacturesState extends State<EcranFactures> {
             Filtre(_Filtre.enRetard, 'En retard', icone: Symbols.schedule),
             Filtre(_Filtre.payees, 'Payé', icone: Symbols.check_circle),
           ],
+          titreFiltres: 'Paiement',
+          iconeFiltres: Symbols.payments,
           filtre: _filtre,
-          nombre: (f) => toutes.where((x) => _garde(suivi, x, f)).length,
-          onFiltre: (f) => setState(() => _filtre = f),
           conteneurs: conteneurs,
           conteneur: _conteneur,
-          onConteneur: (id) => setState(() => _conteneur = id),
+          nombre: (f, id) => toutes.where((x) => _garde(suivi, x, f, id)).length,
+          onAppliquer: (f, id) => setState(() {
+            _filtre = f;
+            _conteneur = id;
+          }),
         ),
         const SizedBox(height: 16),
         if (visibles.isEmpty)

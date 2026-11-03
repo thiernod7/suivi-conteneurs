@@ -29,7 +29,7 @@ class _EcranClientsState extends State<EcranClients> {
     super.dispose();
   }
 
-  bool _garde(CalculClient k, _Filtre f) {
+  bool _garde(CalculClient k, _Filtre f, String? conteneur) {
     final ok = switch (f) {
       _Filtre.tous => true,
       _Filtre.doivent => k.doit > 0,
@@ -37,7 +37,7 @@ class _EcranClientsState extends State<EcranClients> {
       _Filtre.limite => k.depasseLimite,
     };
     return ok &&
-        (_conteneur == null || k.conteneurs.contains(_conteneur)) &&
+        (conteneur == null || k.conteneurs.contains(conteneur)) &&
         correspond([k.client.nom, k.client.quartier], _recherche);
   }
 
@@ -53,7 +53,7 @@ class _EcranClientsState extends State<EcranClients> {
     final suivi = SuiviScope.of(context);
     final tous = suivi.clients
       ..sort((a, b) => b.doit != a.doit ? b.doit.compareTo(a.doit) : a.client.nom.compareTo(b.client.nom));
-    final visibles = tous.where((k) => _garde(k, _filtre)).toList();
+    final visibles = tous.where((k) => _garde(k, _filtre, _conteneur)).toList();
     final conteneurs = [for (final c in suivi.conteneurs) c.conteneur]..sort((a, b) => b.arrivee.compareTo(a.arrivee));
 
     return Scaffold(
@@ -69,12 +69,16 @@ class _EcranClientsState extends State<EcranClients> {
             Filtre(_Filtre.payes, 'Payé', icone: Symbols.check_circle),
             Filtre(_Filtre.limite, 'Limite dépassée', icone: Symbols.warning),
           ],
+          titreFiltres: 'Paiement',
+          iconeFiltres: Symbols.payments,
           filtre: _filtre,
-          nombre: (f) => tous.where((k) => _garde(k, f)).length,
-          onFiltre: (f) => setState(() => _filtre = f),
           conteneurs: conteneurs,
           conteneur: _conteneur,
-          onConteneur: (id) => setState(() => _conteneur = id),
+          nombre: (f, id) => tous.where((k) => _garde(k, f, id)).length,
+          onAppliquer: (f, id) => setState(() {
+            _filtre = f;
+            _conteneur = id;
+          }),
         ),
         const SizedBox(height: 16),
         if (visibles.isEmpty)

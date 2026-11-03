@@ -71,18 +71,33 @@ void main() {
     expect(find.text('Conteneur 482113'), findsNothing);
   });
 
+  Future<void> ouvrirFiltres(WidgetTester tester) async {
+    await tester.tap(find.byTooltip('Filtres'));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> voirResultats(WidgetTester tester) async {
+    await tester.tap(find.textContaining('Voir les résultats'));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('clients : chercher un nom et filtrer', (tester) async {
     await ouvrir(tester, const Size(390, 844));
     await tester.tap(find.text('Clients').last);
     await tester.pumpAndSettle();
+    await ouvrirFiltres(tester);
+    expect(find.text('Filtres'), findsOneWidget);
     expect(find.text('Tous  7'), findsOneWidget);
-    await tester.ensureVisible(find.text('Payé  2'));
     await tester.tap(find.text('Payé  2'));
     await tester.pumpAndSettle();
+    expect(find.text('Voir les résultats · 2'), findsOneWidget);
+    await voirResultats(tester);
     expect(find.text('Ibrahima Sow'), findsOneWidget);
     expect(find.text('Mariama Diallo'), findsNothing);
-    await tester.ensureVisible(find.text('Tous  7'));
-    await tester.tap(find.text('Tous  7'));
+    // Le filtre actif s'affiche sous la recherche ; sa croix l'enlève.
+    await tester.tap(find.byTooltip('Enlever'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mariama Diallo'), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'keita');
     await tester.pumpAndSettle();
     expect(find.text('Moussa Keïta'), findsOneWidget);
@@ -145,14 +160,19 @@ void main() {
     await ouvrir(tester, const Size(390, 844));
     await tester.tap(find.text('Factures').last);
     await tester.pumpAndSettle();
+    await ouvrirFiltres(tester);
     expect(find.text('Toutes  16'), findsOneWidget);
     expect(find.text('À payer  10'), findsOneWidget);
-    await tester.ensureVisible(find.text('Payé  6'));
     await tester.tap(find.text('Payé  6'));
     await tester.pumpAndSettle();
+    await voirResultats(tester);
     expect(find.text('Mariama Diallo'), findsNothing);
-    await tester.ensureVisible(find.text('Toutes  16'));
-    await tester.tap(find.text('Toutes  16'));
+    // « Réinitialiser » dans le panneau remet tout.
+    await ouvrirFiltres(tester);
+    await tester.tap(find.text('Réinitialiser'));
+    await tester.pumpAndSettle();
+    expect(find.text('Voir les résultats · 16'), findsOneWidget);
+    await voirResultats(tester);
     await tester.enterText(find.byType(TextField), 'mariama');
     await tester.pumpAndSettle();
     expect(find.text('Mariama Diallo'), findsNWidgets(3));
@@ -201,8 +221,10 @@ void main() {
     await ouvrir(tester, const Size(1400, 1000));
     await tester.tap(find.text('Conteneurs').last);
     await tester.pumpAndSettle();
+    await ouvrirFiltres(tester);
     expect(find.text('En vente  1'), findsOneWidget);
     expect(find.text('Tout vendu  3'), findsOneWidget);
+    await voirResultats(tester);
     await tester.enterText(find.byType(TextField), 'riz');
     await tester.pumpAndSettle();
     expect(find.text('482113'), findsOneWidget);
@@ -213,40 +235,67 @@ void main() {
     await tester.tap(find.text('Tout voir'));
     await tester.pumpAndSettle();
     expect(find.text('640055'), findsOneWidget);
+    await ouvrirFiltres(tester);
     await tester.tap(find.text('En vente  1'));
     await tester.pumpAndSettle();
+    await voirResultats(tester);
     expect(find.text('482113'), findsNothing);
+    expect(find.widgetWithText(InputChip, 'En vente'), findsOneWidget);
   });
 
   testWidgets('clients : filtre par conteneur et limite dépassée', (tester) async {
     await ouvrir(tester, const Size(1400, 1000));
     await tester.tap(find.text('Clients').last);
     await tester.pumpAndSettle();
+    await ouvrirFiltres(tester);
     expect(find.text('Limite dépassée  2'), findsOneWidget);
     await tester.tap(find.widgetWithText(ChoiceChip, '603218'));
     await tester.pumpAndSettle();
     expect(find.text('Tous  3'), findsOneWidget);
-    expect(find.text('Ibrahima Sow'), findsOneWidget);
-    expect(find.text('Fatoumata Camara'), findsNothing);
-    // Toucher encore le conteneur enlève le filtre.
+    // Toucher encore le conteneur l'enlève.
     await tester.tap(find.widgetWithText(ChoiceChip, '603218'));
     await tester.pumpAndSettle();
     expect(find.text('Tous  7'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, '603218'));
+    await tester.pumpAndSettle();
+    await voirResultats(tester);
+    expect(find.text('Ibrahima Sow'), findsOneWidget);
+    expect(find.text('Fatoumata Camara'), findsNothing);
   });
 
   testWidgets('factures : en retard, par produit, par conteneur', (tester) async {
     await ouvrir(tester, const Size(1400, 1000));
     await tester.tap(find.text('Factures').last);
     await tester.pumpAndSettle();
+    await ouvrirFiltres(tester);
     expect(find.text('En retard  6'), findsOneWidget);
+    await voirResultats(tester);
     await tester.enterText(find.byType(TextField), 'sucre');
     await tester.pumpAndSettle();
+    await ouvrirFiltres(tester);
     expect(find.text('Toutes  3'), findsOneWidget);
+    await voirResultats(tester);
     await tester.tap(find.byTooltip('Effacer'));
     await tester.pumpAndSettle();
-    expect(find.text('Toutes  16'), findsOneWidget);
+    await ouvrirFiltres(tester);
     await tester.tap(find.widgetWithText(ChoiceChip, '517390'));
     await tester.pumpAndSettle();
     expect(find.text('Toutes  4'), findsOneWidget);
+    await voirResultats(tester);
+    expect(find.widgetWithText(InputChip, '517390'), findsOneWidget);
+  });
+
+  testWidgets('panneau des filtres en grand texte (+30 %) : rien ne déborde', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await ouvrir(tester, const Size(360, 780));
+    await tester.tap(find.text('Factures').last);
+    await tester.pumpAndSettle();
+    await ouvrirFiltres(tester);
+    await tester.tap(find.widgetWithText(ChoiceChip, '640055'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await voirResultats(tester);
+    expect(tester.takeException(), isNull);
   });
 }

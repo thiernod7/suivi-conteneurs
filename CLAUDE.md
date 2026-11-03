@@ -49,7 +49,12 @@ On ne la copie pas. On conçoit **nos propres interfaces et notre propre expéri
 - **Clients** : la liste, puis un client (ce qu'il a pris, dans quels conteneurs, ce qu'il doit).
 - **Factures** : la liste, puis une facture (ce qui a été pris, les paiements, ce qui reste à payer).
 - Les rapports (impayés anciens, meilleurs clients, meilleurs produits) viennent sur l'Accueil, pas dans un écran à part.
-- **Recherche et filtres**, les mêmes sur les trois listes (`lib/ui/recherche.dart`) : une case pour chercher (sans tenir compte des majuscules ni des accents), une rangée de filtres avec leur nombre, une rangée de conteneurs (leur carré de couleur ; toucher à nouveau enlève le filtre). Chaque rangée tient sur une ligne et glisse de côté. Si rien ne correspond : « Tout voir » remet tout à zéro.
+- **Recherche et filtres**, les mêmes sur les trois listes (`lib/ui/recherche.dart`) :
+  - une case pour chercher (sans tenir compte des majuscules ni des accents), avec une croix pour l'effacer ;
+  - à côté, un bouton **Filtres** (icône réglages) avec un petit nombre quand des filtres sont actifs ;
+  - il ouvre un **panneau qui monte du bas** (bottom sheet) : titre « Filtres », les choix en boutons visibles avec leur nombre (pas de listes déroulantes), les conteneurs (leur carré de couleur ; toucher à nouveau enlève), puis **Réinitialiser** et **Voir les résultats · N**. Les choix ne s'appliquent qu'en touchant « Voir les résultats » ;
+  - les filtres actifs s'affichent sous la recherche, avec une croix pour les enlever ;
+  - si rien ne correspond : « Tout voir » remet tout à zéro.
   - Conteneurs : numéro, pays, fournisseur ou produit ; Tous / En vente / Tout vendu.
   - Clients : nom ou quartier ; Tous / Me doivent / Payé / Limite dépassée ; par conteneur.
   - Factures : nom, numéro ou produit ; Toutes / À payer / En retard (plus de 30 jours) / Payé ; par conteneur.
