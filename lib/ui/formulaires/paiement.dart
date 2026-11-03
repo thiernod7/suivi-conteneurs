@@ -12,7 +12,10 @@ import '../theme.dart';
 import 'champs.dart';
 
 class FormulairePaiement extends StatefulWidget {
-  const FormulairePaiement({super.key, this.facture});
+  const FormulairePaiement({super.key, this.facture, this.rang});
+
+  /// Le rang du paiement à modifier, ou null pour un nouveau paiement.
+  final int? rang;
 
   /// La facture déjà choisie (quand on vient de sa page).
   final String? facture;
@@ -28,6 +31,27 @@ class _FormulairePaiementState extends State<FormulairePaiement> {
   final _remarque = TextEditingController();
   var _mode = ModePaiement.especes;
   late var _date = SuiviScope.depot(context).aujourdhui;
+  var _pret = false;
+
+  /// En modification : la facture et le montant d'avant (il compte déjà dans ce qui a été payé).
+  String? _factureAvant;
+  var _avant = 0;
+
+  bool get _modification => widget.rang != null;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_pret || !_modification) return;
+    _pret = true;
+    final p = SuiviScope.depot(context).donnees.paiements[widget.rang!];
+    _facture = _factureAvant = p.facture;
+    _avant = p.montant;
+    ecrireNombre(_montant, p.montant);
+    _mode = p.mode;
+    _date = p.date;
+    _remarque.text = p.remarque ?? '';
+  }
 
   @override
   void dispose() {
@@ -38,14 +62,20 @@ class _FormulairePaiementState extends State<FormulairePaiement> {
 
   void _enregistrer() {
     final montant = lireNombre(_montant);
-    SuiviScope.depot(context).ajouterPaiement(Paiement(
+    final paiement = Paiement(
       facture: _facture!,
       date: _date,
       montant: montant,
       mode: _mode,
       remarque: _remarque.text.trim().isEmpty ? null : _remarque.text.trim(),
-    ));
-    annoncer(context, '${court(montant)} GNF reçus');
+    );
+    if (_modification) {
+      SuiviScope.depot(context).modifierPaiement(widget.rang!, paiement);
+      annoncer(context, 'Modifié');
+    } else {
+      SuiviScope.depot(context).ajouterPaiement(paiement);
+      annoncer(context, '${court(montant)} GNF reçus');
+    }
     context.pop();
   }
 
@@ -55,10 +85,25 @@ class _FormulairePaiementState extends State<FormulairePaiement> {
     final c = context.couleurs;
     final aPayer = suivi.factures.where((f) => f.solde > 0 || f.facture.numero == _facture).toList()
       ..sort((a, b) => a.facture.date.compareTo(b.facture.date));
-    final solde = _facture == null ? 0 : suivi.facture(_facture!).solde;
+    // En modification, l'ancien montant de ce paiement est de nouveau « à payer ».
+    final solde = _facture == null
+        ? 0
+        : (suivi.factureOuNull(_facture!)?.solde ?? 0) + (_facture == _factureAvant ? _avant : 0);
+    final depot = SuiviScope.depot(context);
 
     return PageFormulaire(
-      titre: 'Nouveau paiement',
+      titre: _modification ? 'Modifier le paiement' : 'Nouveau paiement',
+      supprimer: !_modification
+          ? null
+          : Suppression(
+              texte: 'Supprimer ce paiement',
+              message: '${court(_avant)} GNF ne seront plus comptés comme reçus.',
+              onSupprimer: () {
+                context.pop();
+                depot.supprimerPaiement(widget.rang!);
+                annoncer(context, 'Paiement supprimé');
+              },
+            ),
       cle: _cle,
       onEnregistrer: _enregistrer,
       enfants: [
@@ -75,7 +120,10 @@ class _FormulairePaiementState extends State<FormulairePaiement> {
                 titre: suivi.client(f.facture.clientId).client.nom,
                 sousTitre: '${numeroCourt(f)} · ${date(f.facture.date)}',
                 avant: AvatarClient(suivi.client(f.facture.clientId).client, rayon: 18),
-                apres: Text(court(f.solde), style: TextStyle(color: c.alerte, fontWeight: FontWeight.w600)),
+                apres: Text(
+                  court(f.solde),
+                  style: TextStyle(color: c.alerte, fontWeight: FontWeight.w600),
+                ),
               ),
           ],
         ),

@@ -55,7 +55,11 @@ On ne la copie pas. On conçoit **nos propres interfaces et notre propre expéri
   - Montants écrits par paquets de trois chiffres pendant la saisie. Choix en boutons visibles (taille, unité, image du produit, « Comment ? » pour le mode de paiement). Client, facture, produit : on les choisit dans un panneau qui monte du bas, avec une recherche.
   - Contrôles : champs obligatoires, numéro de conteneur (4 lettres et 7 chiffres, pas deux fois le même), quantité vendue ≤ ce qui reste, paiement ≤ ce qui reste à payer, retour ≤ ce qui a été pris. Messages courts : « Obligatoire », « Il reste 230 ».
   - Facture : lignes produit par produit (le prix se remplit tout seul), montant calculé, « Payé maintenant » avec Rien / Tout. Numéros donnés tout seuls : `FAC-2026-017`, `AV-2026-004`.
-- Pour l'instant on ajoute seulement ; modifier et supprimer viendront ensuite.
+- **Modifier et supprimer** : les mêmes formulaires, déjà remplis (titre « Modifier le… »).
+  - On les ouvre avec le **crayon ✎** en haut d'un conteneur, d'un client, d'une facture ; en touchant un produit (dans son conteneur), un paiement ou un retour (dans sa facture), ou une ligne des listes Produits, Paiements, Retours.
+  - **Supprimer** : un seul endroit, le bouton rouge en bas du formulaire de modification, toujours avec une confirmation (« Oui, supprimer » / « Non »).
+  - Protections : un conteneur ou un produit utilisé par des factures, un client qui a des factures, ne se suppriment pas (message « Impossible » qui dit quoi faire d'abord). Supprimer une facture supprime aussi ses paiements et ses retours. La quantité reçue d'un produit ne descend pas sous ce qui est vendu ; un paiement ne dépasse pas ce qui reste à payer ; le montant d'une facture ne descend pas sous ce qui est déjà reçu ; les produits d'une facture ne changent plus quand elle a des retours.
+  - Changer le prix d'un produit ne change pas les factures déjà faites. Un conteneur passe à « Tout vendu » depuis sa modification.
 - **Recherche et filtres**, les mêmes sur les trois listes (`lib/ui/recherche.dart`) :
   - une case pour chercher (sans tenir compte des majuscules ni des accents), avec une croix pour l'effacer ;
   - à côté, un bouton **Filtres** (icône réglages) avec un petit nombre quand des filtres sont actifs ;

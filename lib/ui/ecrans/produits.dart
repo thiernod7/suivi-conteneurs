@@ -91,7 +91,7 @@ class _EcranProduitsState extends State<EcranProduits> {
           CarteListe(lignes: [
             for (final (k, p) in visibles)
               InkWell(
-                onTap: () => context.push('/conteneurs/${k.id}'),
+                onTap: () => context.push('/modifier/produit?conteneur=${k.id}&produit=${p.produit.id}'),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(children: [

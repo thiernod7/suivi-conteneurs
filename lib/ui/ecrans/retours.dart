@@ -30,7 +30,7 @@ class EcranRetours extends StatelessWidget {
           CarteListe(lignes: [
             for (final a in retours)
               InkWell(
-                onTap: () => context.push('/factures/${a.facture.facture.numero}'),
+                onTap: () => context.push('/modifier/retour?numero=${a.avoir.numero}'),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(children: [

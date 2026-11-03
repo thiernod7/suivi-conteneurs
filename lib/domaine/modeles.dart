@@ -85,6 +85,32 @@ class Conteneur {
 
   /// « 482113 » : la partie du numéro qu'on lit le plus vite.
   String get numeroCourt => numero.substring(5, 11);
+
+  /// Le même conteneur, avec quelques changements.
+  Conteneur copyWith({
+    String? numero,
+    TypeConteneur? type,
+    String? origine,
+    DateTime? arrivee,
+    String? fournisseur,
+    int? verseFournisseur,
+    StatutConteneur? statut,
+    Couts? couts,
+    List<Produit>? produits,
+  }) =>
+      Conteneur(
+        id: id,
+        numero: numero ?? this.numero,
+        type: type ?? this.type,
+        origine: origine ?? this.origine,
+        arrivee: arrivee ?? this.arrivee,
+        fournisseur: fournisseur ?? this.fournisseur,
+        verseFournisseur: verseFournisseur ?? this.verseFournisseur,
+        statut: statut ?? this.statut,
+        couleur: couleur,
+        couts: couts ?? this.couts,
+        produits: produits ?? this.produits,
+      );
 }
 
 /// Dessin du personnage qui représente un client.
@@ -113,6 +139,14 @@ class Client {
   final String quartier;
   final int limiteCredit;
   final Apparence apparence;
+
+  Client copyWith({String? nom, String? quartier, int? limiteCredit}) => Client(
+        id: id,
+        nom: nom ?? this.nom,
+        quartier: quartier ?? this.quartier,
+        limiteCredit: limiteCredit ?? this.limiteCredit,
+        apparence: apparence,
+      );
 }
 
 class LigneFacture {

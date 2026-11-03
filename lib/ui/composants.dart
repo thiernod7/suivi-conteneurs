@@ -478,3 +478,20 @@ class BoutonAjouter extends StatelessWidget {
         label: Text(texte, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
       );
 }
+
+/// Ce qu'affiche une page quand ce qu'elle montrait a été supprimé.
+class EcranSupprime extends StatelessWidget {
+  const EcranSupprime({super.key});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(),
+        body: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Symbols.delete, size: 48, color: context.couleurs.muet, weight: 200),
+            const SizedBox(height: 8),
+            Text('Supprimé', style: TextStyle(fontSize: 18, color: context.couleurs.muet)),
+          ]),
+        ),
+      );
+}

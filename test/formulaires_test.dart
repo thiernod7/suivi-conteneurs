@@ -176,4 +176,130 @@ void main() {
     await ecrire(tester, 'Reçu', '1000');
     expect(tester.takeException(), isNull);
   });
+
+  Future<void> ouvrirFacture(WidgetTester tester, String numero) async {
+    await aller(tester, 'Factures');
+    await tester.enterText(find.byType(TextField), numero);
+    await tester.pumpAndSettle();
+    await toucher(tester, find.textContaining(numero).last);
+  }
+
+  Future<void> confirmerSuppression(WidgetTester tester, String bouton) async {
+    await toucher(tester, find.text(bouton));
+    await toucher(tester, find.text('Oui, supprimer'));
+  }
+
+  testWidgets('modifier un client avec le crayon', (tester) async {
+    await ouvrir(tester);
+    await aller(tester, 'Clients');
+    await toucher(tester, find.text('Ibrahima Sow'));
+    await toucher(tester, find.byTooltip('Modifier'));
+    expect(find.text('Modifier le client'), findsOneWidget);
+    await ecrire(tester, 'Nom', 'Ibrahima Sow Junior');
+    await enregistrer(tester);
+    expect(find.text('Ibrahima Sow Junior'), findsWidgets);
+  });
+
+  testWidgets('supprimer un client : impossible s\'il a des factures, possible sinon', (tester) async {
+    await ouvrir(tester);
+    await aller(tester, 'Clients');
+    await toucher(tester, find.text('Ibrahima Sow'));
+    await toucher(tester, find.byTooltip('Modifier'));
+    await toucher(tester, find.text('Supprimer ce client'));
+    expect(find.text('Impossible'), findsOneWidget);
+    await toucher(tester, find.text('Compris'));
+    await toucher(tester, find.byTooltip('Annuler'));
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    final id = depot.ajouterClient(nom: 'Client en trop', quartier: 'Q', limiteCredit: 1);
+    await tester.pumpAndSettle();
+    await toucher(tester, find.text('Client en trop'));
+    await toucher(tester, find.byTooltip('Modifier'));
+    await confirmerSuppression(tester, 'Supprimer ce client');
+    expect(tester.takeException(), isNull);
+    expect(find.text('Client en trop'), findsNothing);
+    expect(depot.suivi.clientOuNull(id), isNull);
+  });
+
+  testWidgets('modifier puis supprimer un paiement depuis la facture', (tester) async {
+    await ouvrir(tester);
+    await ouvrirFacture(tester, '2026-008');
+    await toucher(tester, find.text('Orange Money'));
+    expect(find.text('Modifier le paiement'), findsOneWidget);
+    await ecrire(tester, 'Reçu', '99999999');
+    await enregistrer(tester);
+    expect(find.textContaining('Il reste'), findsOneWidget);
+    await ecrire(tester, 'Reçu', '47100000');
+    await enregistrer(tester);
+    expect(depot.suivi.facture('FAC-2026-008').solde, 0);
+    await toucher(tester, find.text('Orange Money'));
+    await confirmerSuppression(tester, 'Supprimer ce paiement');
+    expect(find.text('Rien reçu'), findsOneWidget);
+    expect(depot.suivi.facture('FAC-2026-008').paye, 0);
+  });
+
+  testWidgets('supprimer une facture : ses paiements et retours partent aussi', (tester) async {
+    await ouvrir(tester);
+    await ouvrirFacture(tester, '2026-011');
+    await toucher(tester, find.byTooltip('Modifier'));
+    expect(find.text('Cette facture a des retours : ses produits ne changent plus.'), findsOneWidget);
+    await confirmerSuppression(tester, 'Supprimer cette facture');
+    expect(tester.takeException(), isNull);
+    expect(depot.suivi.factureOuNull('FAC-2026-011'), isNull);
+    expect(depot.donnees.avoirs.length, 2);
+    expect(find.text('Factures'), findsWidgets);
+  });
+
+  testWidgets('modifier une facture : moins de produits, et pas sous ce qui est déjà reçu', (tester) async {
+    await ouvrir(tester);
+    await ouvrirFacture(tester, '2026-010');
+    await toucher(tester, find.byTooltip('Modifier'));
+    // Deux produits sur cette facture : on change le premier.
+    final quantite = find.widgetWithText(TextFormField, 'Quantité').first;
+    await montrer(tester, quantite);
+    await tester.enterText(quantite, '10');
+    await tester.pumpAndSettle();
+    await enregistrer(tester);
+    expect(find.textContaining('Déjà reçu'), findsWidgets);
+    expect(depot.suivi.facture('FAC-2026-010').total, 400 * 160000 + 200 * 210000);
+  });
+
+  testWidgets('modifier un produit : pas moins que ce qui est vendu', (tester) async {
+    await ouvrir(tester);
+    await aller(tester, 'Conteneurs');
+    await toucher(tester, find.text('640055'));
+    await toucher(tester, find.text('Sucre 50 kg'));
+    expect(find.text('Modifier le produit'), findsOneWidget);
+    await ecrire(tester, 'Quantité reçue', '300');
+    await enregistrer(tester);
+    expect(find.text('Déjà vendu 470'), findsOneWidget);
+    await ecrire(tester, 'Quantité reçue', '800');
+    await enregistrer(tester);
+    expect(find.text('Reste 330'), findsOneWidget);
+  });
+
+  testWidgets('conteneur : passer à « Tout vendu » ; supprimer impossible s\'il a des factures', (tester) async {
+    await ouvrir(tester);
+    await aller(tester, 'Conteneurs');
+    await toucher(tester, find.text('640055'));
+    await toucher(tester, find.byTooltip('Modifier'));
+    await toucher(tester, find.text('Tout vendu'));
+    await enregistrer(tester);
+    expect(depot.suivi.conteneur('C4').provisoire, isFalse);
+    await toucher(tester, find.byTooltip('Modifier'));
+    await toucher(tester, find.text('Supprimer ce conteneur'));
+    expect(find.text('Impossible'), findsOneWidget);
+  });
+
+  testWidgets('modifier un retour depuis la facture', (tester) async {
+    await ouvrir(tester);
+    await ouvrirFacture(tester, '2026-005');
+    await toucher(tester, find.text('Rendus 20'));
+    expect(find.text('Modifier le retour'), findsOneWidget);
+    await ecrire(tester, 'Quantité', '10');
+    await enregistrer(tester);
+    expect(find.text('Rendus 10'), findsOneWidget);
+    expect(depot.suivi.facture('FAC-2026-005').solde, 78000000 - 3900000);
+  });
 }

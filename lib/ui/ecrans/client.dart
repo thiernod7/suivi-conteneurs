@@ -20,7 +20,8 @@ class EcranClient extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final suivi = SuiviScope.of(context);
-    final k = suivi.client(id);
+    final k = suivi.clientOuNull(id);
+    if (k == null) return const EcranSupprime();
     final c = context.couleurs;
     final factures = [...k.factures]..sort((a, b) => b.facture.date.compareTo(a.facture.date));
 
@@ -28,6 +29,14 @@ class EcranClient extends StatelessWidget {
       floatingActionButton: BoutonAjouter('Nouvelle facture', chemin: '/nouveau/facture?client=$id'),
       appBar: AppBar(
         leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go('/clients')),
+        actions: [
+          IconButton(
+            tooltip: 'Modifier',
+            icon: const Icon(Symbols.edit),
+            onPressed: () => context.push('/modifier/client?id=$id'),
+          ),
+          const SizedBox(width: 8),
+        ],
         title: Row(children: [
           AvatarClient(k.client, rayon: 17),
           const SizedBox(width: 10),

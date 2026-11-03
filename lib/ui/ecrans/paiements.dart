@@ -67,7 +67,7 @@ class _EcranPaiementsState extends State<EcranPaiements> {
         CarteListe(lignes: [
           for (final p in visibles)
             InkWell(
-              onTap: () => context.push('/factures/${p.facture}'),
+              onTap: () => context.push('/modifier/paiement?rang=${SuiviScope.depot(context).rangPaiement(p)}'),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(children: [

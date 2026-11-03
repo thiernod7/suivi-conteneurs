@@ -250,6 +250,11 @@ class Suivi {
   CalculClient client(String id) => _clients[id]!;
   CalculFacture facture(String numero) => _factures[numero]!;
 
+  /// Null si l'élément n'existe pas (par exemple, il vient d'être supprimé).
+  CalculConteneur? conteneurOuNull(String id) => _conteneurs[id];
+  CalculClient? clientOuNull(String id) => _clients[id];
+  CalculFacture? factureOuNull(String numero) => _factures[numero];
+
   /// Le produit d'une ligne de facture.
   Produit produit(LigneFacture l) =>
       _conteneurs[l.conteneurId]!.conteneur.produits.firstWhere((p) => p.id == l.produitId);

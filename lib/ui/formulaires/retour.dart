@@ -13,7 +13,10 @@ import '../theme.dart';
 import 'champs.dart';
 
 class FormulaireRetour extends StatefulWidget {
-  const FormulaireRetour({super.key, this.facture});
+  const FormulaireRetour({super.key, this.facture, this.numero});
+
+  /// Le numéro du retour à modifier, ou null pour un nouveau retour.
+  final String? numero;
 
   /// La facture déjà choisie (quand on vient de sa page).
   final String? facture;
@@ -30,12 +33,33 @@ class _FormulaireRetourState extends State<FormulaireRetour> {
   final _motif = TextEditingController();
   var _type = TypeAvoir.remisEnStock;
   late var _date = SuiviScope.depot(context).aujourdhui;
+  var _pret = false;
+
+  /// En modification : la quantité rendue avant (elle n'est plus comptée chez le client).
+  var _renduAvant = 0;
+
+  bool get _modification => widget.numero != null;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_pret || !_modification) return;
+    _pret = true;
+    final a = SuiviScope.depot(context).donnees.avoirs.firstWhere((a) => a.numero == widget.numero);
+    _facture = a.facture;
+    _ligne = a.ligne;
+    ecrireNombre(_quantite, a.quantite);
+    _type = a.type;
+    _date = a.date;
+    _motif.text = a.motif;
+    _renduAvant = a.type.marchandiseRendue ? a.quantite : 0;
+  }
 
   static IconData icone(TypeAvoir t) => switch (t) {
-        TypeAvoir.remisEnStock => Symbols.undo,
-        TypeAvoir.rebut => Symbols.delete,
-        TypeAvoir.remise => Symbols.sell,
-      };
+    TypeAvoir.remisEnStock => Symbols.undo,
+    TypeAvoir.rebut => Symbols.delete,
+    TypeAvoir.remise => Symbols.sell,
+  };
 
   @override
   void dispose() {
@@ -45,6 +69,18 @@ class _FormulaireRetourState extends State<FormulaireRetour> {
   }
 
   void _enregistrer() {
+    if (_modification) {
+      SuiviScope.depot(context).modifierAvoir(
+        widget.numero!,
+        quantite: lireNombre(_quantite),
+        type: _type,
+        date: _date,
+        motif: _motif.text.trim(),
+      );
+      annoncer(context, 'Modifié');
+      context.pop();
+      return;
+    }
     SuiviScope.depot(context).ajouterAvoir(
       facture: _facture!,
       ligne: _ligne!,
@@ -62,13 +98,25 @@ class _FormulaireRetourState extends State<FormulaireRetour> {
     final suivi = SuiviScope.of(context);
     final c = context.couleurs;
     final factures = suivi.factures..sort((a, b) => b.facture.date.compareTo(a.facture.date));
-    final f = _facture == null ? null : suivi.facture(_facture!);
+    final f = _facture == null ? null : suivi.factureOuNull(_facture!);
+    final depot = SuiviScope.depot(context);
     final ligne = (f == null || _ligne == null) ? null : f.lignes[_ligne!];
     final produit = ligne == null ? null : suivi.produit(ligne.ligne);
     final montant = ligne == null ? 0 : lireNombre(_quantite) * ligne.ligne.prix;
 
     return PageFormulaire(
-      titre: 'Nouveau retour',
+      titre: _modification ? 'Modifier le retour' : 'Nouveau retour',
+      supprimer: !_modification
+          ? null
+          : Suppression(
+              texte: 'Supprimer ce retour',
+              message: 'Le retour sera effacé : la facture et le stock reviennent comme avant.',
+              onSupprimer: () {
+                context.pop();
+                depot.supprimerAvoir(widget.numero!);
+                annoncer(context, 'Retour supprimé');
+              },
+            ),
       cle: _cle,
       onEnregistrer: _enregistrer,
       enfants: [
@@ -81,13 +129,15 @@ class _FormulaireRetourState extends State<FormulaireRetour> {
             _ligne = null;
           }),
           options: [
+            // En modification, le retour reste sur sa facture et son produit.
             for (final x in factures)
-              Option(
-                valeur: x.facture.numero,
-                titre: suivi.client(x.facture.clientId).client.nom,
-                sousTitre: '${numeroCourt(x)} · ${date(x.facture.date)}',
-                avant: AvatarClient(suivi.client(x.facture.clientId).client, rayon: 18),
-              ),
+              if (!_modification || x.facture.numero == _facture)
+                Option(
+                  valeur: x.facture.numero,
+                  titre: suivi.client(x.facture.clientId).client.nom,
+                  sousTitre: '${numeroCourt(x)} · ${date(x.facture.date)}',
+                  avant: AvatarClient(suivi.client(x.facture.clientId).client, rayon: 18),
+                ),
           ],
         ),
         if (f != null) ...[
@@ -101,7 +151,7 @@ class _FormulaireRetourState extends State<FormulaireRetour> {
             onChanged: (v) => setState(() => _ligne = v),
             options: [
               for (final (i, l) in f.lignes.indexed)
-                if (l.quantiteGardee > 0)
+                if (l.quantiteGardee > 0 || (_modification && i == _ligne))
                   Option(
                     valeur: i,
                     titre: suivi.produit(l.ligne).nom,
@@ -124,14 +174,19 @@ class _FormulaireRetourState extends State<FormulaireRetour> {
           libelle: 'Quantité',
           icone: Symbols.inventory_2,
           suffixe: produit?.unite ?? '',
-          maximum: ligne?.quantiteGardee,
-          messageMaximum: 'Il en a pris ${nombre(ligne?.quantiteGardee ?? 0)}',
+          maximum: ligne == null ? null : ligne.quantiteGardee + _renduAvant,
+          messageMaximum: 'Il en a pris ${nombre((ligne?.quantiteGardee ?? 0) + _renduAvant)}',
           onChanged: (_) => setState(() {}),
         ),
         if (montant > 0) ...[
           espaceChamp,
           Card(
-            child: LigneChiffre(icone: Symbols.undo, mot: 'Retours', montant: '− ${court(montant)}', couleur: c.attention),
+            child: LigneChiffre(
+              icone: Symbols.undo,
+              mot: 'Retours',
+              montant: '− ${court(montant)}',
+              couleur: c.attention,
+            ),
           ),
         ],
         espaceChamp,
