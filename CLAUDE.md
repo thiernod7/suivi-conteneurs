@@ -48,7 +48,14 @@ On ne la copie pas. On conçoit **nos propres interfaces et notre propre expéri
 - **Conteneurs** : la liste, puis un conteneur (dépensé, vendu, on me doit, gagné ; ce qu'il y a dedans ; ses clients).
 - **Clients** : la liste, puis un client (ce qu'il a pris, dans quels conteneurs, ce qu'il doit).
 - **Factures** : la liste, puis une facture (ce qui a été pris, les paiements, ce qui reste à payer).
+- **Plus** (5e bouton) : Produits, Paiements, Retours, Fournisseurs, et « Remettre les exemples ».
 - Les rapports (impayés anciens, meilleurs clients, meilleurs produits) viennent sur l'Accueil, pas dans un écran à part.
+- **Formulaires d'ajout** (`lib/ui/formulaires/`), en plein écran : une croix pour annuler, un grand bouton **Enregistrer** en bas.
+  - On les ouvre avec le gros bouton **+** en bas des listes (Nouveau conteneur, client, facture, produit, paiement, retour) ou depuis une page : Ajouter un produit (conteneur), Nouvelle facture (client), Ajouter un paiement et Retour (facture).
+  - Montants écrits par paquets de trois chiffres pendant la saisie. Choix en boutons visibles (taille, unité, image du produit, « Comment ? » pour le mode de paiement). Client, facture, produit : on les choisit dans un panneau qui monte du bas, avec une recherche.
+  - Contrôles : champs obligatoires, numéro de conteneur (4 lettres et 7 chiffres, pas deux fois le même), quantité vendue ≤ ce qui reste, paiement ≤ ce qui reste à payer, retour ≤ ce qui a été pris. Messages courts : « Obligatoire », « Il reste 230 ».
+  - Facture : lignes produit par produit (le prix se remplit tout seul), montant calculé, « Payé maintenant » avec Rien / Tout. Numéros donnés tout seuls : `FAC-2026-017`, `AV-2026-004`.
+- Pour l'instant on ajoute seulement ; modifier et supprimer viendront ensuite.
 - **Recherche et filtres**, les mêmes sur les trois listes (`lib/ui/recherche.dart`) :
   - une case pour chercher (sans tenir compte des majuscules ni des accents), avec une croix pour l'effacer ;
   - à côté, un bouton **Filtres** (icône réglages) avec un petit nombre quand des filtres sont actifs ;
@@ -85,7 +92,7 @@ L'application sera utilisée par des personnes qui lisent peu. Elle doit se comp
 
 - **Une icône à côté de chaque mot** et **une couleur pour chaque statut** : vert ✓ Payé, orange En partie, rouge ✗ Pas payé. Jamais la couleur seule.
 - **Les montants en grand**, abrégés : `381,9 M GNF`, `1,07 Md GNF`.
-- **Gros boutons**, faciles à toucher. 4 boutons de navigation seulement : Accueil, Conteneurs, Clients, Factures.
+- **Gros boutons**, faciles à toucher. 5 boutons de navigation : Accueil, Conteneurs, Clients, Factures, Plus.
 - Un **bouton retour** en haut de chaque écran de détail.
 - Un conteneur = un **carré de couleur** et les 6 chiffres qu'on retient (`482113`). Un client = un **rond avec ses initiales**. Un produit = une **petite image** (sac, bidon, carton, pneu…).
 - Police **Lexend**, conçue pour faciliter la lecture. Texte un peu plus grand que d'habitude. L'écran doit rester correct quand le téléphone est réglé en **grand texte**.
@@ -110,6 +117,8 @@ Python, Django, FastAPI, React.js, React Native, Tailwind CSS. Pour ce projet : 
 ## Organisation du code
 - `lib/domaine/` : modèles et calculs, en Dart pur, sans interface. Les écrans ne font qu'afficher ce que `Suivi` a calculé.
 - `lib/donnees/exemple.dart` : données d'exemple du prototype.
+- `lib/donnees/depot.dart` : `Depot`, les données qu'on modifie (ajouts, numéros automatiques). Elles sont **gardées sur l'appareil** (`shared_preferences`, en JSON via `json.dart`) ; la première fois, ce sont les exemples. Après chaque ajout, `Suivi` est recalculé et tous les écrans se mettent à jour.
+- Date du jour : la vraie date dans l'application ; une date fixe (`aujourdhuiExemple`) dans les tests.
 - `lib/ui/` : écrans, thème (`Couleurs` : une couleur par conteneur, couleurs de statut), composants communs (`composants.dart`), images des produits.
 - Tests : `flutter test` (calculs, écrans sur ordinateur, téléphone et grand texte). Analyse : `flutter analyze`. Les deux doivent passer avant de pousser.
 - Mise en page adaptative : barre de navigation en bas sous 760 px de large, rail sur le côté au-delà.

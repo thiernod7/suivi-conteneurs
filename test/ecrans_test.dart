@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:suivi_conteneurs/app.dart';
-import 'package:suivi_conteneurs/domaine/calculs.dart';
+import 'package:suivi_conteneurs/donnees/depot.dart';
 import 'package:suivi_conteneurs/donnees/exemple.dart';
 
 void main() {
@@ -22,7 +22,7 @@ void main() {
     tester.view.physicalSize = taille;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(Application(suivi: Suivi(donneesExemple, aujourdhuiExemple)));
+    await tester.pumpWidget(Application(depot: Depot(donneesExemple, aujourdhui: aujourdhuiExemple)));
     await tester.pumpAndSettle();
   }
 

@@ -25,6 +25,7 @@ class EcranClient extends StatelessWidget {
     final factures = [...k.factures]..sort((a, b) => b.facture.date.compareTo(a.facture.date));
 
     return Scaffold(
+      floatingActionButton: BoutonAjouter('Nouvelle facture', chemin: '/nouveau/facture?client=$id'),
       appBar: AppBar(
         leading: BackButton(onPressed: () => context.canPop() ? context.pop() : context.go('/clients')),
         title: Row(children: [

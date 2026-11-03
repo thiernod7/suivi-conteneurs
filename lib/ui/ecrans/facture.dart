@@ -96,6 +96,30 @@ class EcranFacture extends StatelessWidget {
             couleur: f.solde > 0 ? c.alerte : c.ok,
           ),
         ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          if (f.solde > 0) ...[
+            Expanded(
+              flex: 3,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(minimumSize: const Size(0, 52)),
+                onPressed: () => context.push('/nouveau/paiement?facture=$numero'),
+                icon: const Icon(Symbols.payments),
+                label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Ajouter un paiement')),
+              ),
+            ),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            flex: 2,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(minimumSize: const Size(0, 52)),
+              onPressed: () => context.push('/nouveau/retour?facture=$numero'),
+              icon: const Icon(Symbols.undo),
+              label: const Text('Retour'),
+            ),
+          ),
+        ]),
         if (f.credit > 0) ...[
           const SizedBox(height: 12),
           Note(

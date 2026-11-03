@@ -57,6 +57,7 @@ class _EcranClientsState extends State<EcranClients> {
     final conteneurs = [for (final c in suivi.conteneurs) c.conteneur]..sort((a, b) => b.arrivee.compareTo(a.arrivee));
 
     return Scaffold(
+      floatingActionButton: const BoutonAjouter('Nouveau client', chemin: '/nouveau/client'),
       appBar: AppBar(title: const Text('Clients')),
       body: PageContenu(enfants: [
         BarreRecherche<_Filtre>(

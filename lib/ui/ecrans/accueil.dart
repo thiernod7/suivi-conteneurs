@@ -21,6 +21,7 @@ class EcranAccueil extends StatelessWidget {
     final conteneurs = [...suivi.conteneurs]..sort((a, b) => b.conteneur.arrivee.compareTo(a.conteneur.arrivee));
 
     return Scaffold(
+      floatingActionButton: const BoutonAjouter('Nouvelle facture', chemin: '/nouveau/facture'),
       appBar: AppBar(title: const Text('Accueil')),
       body: PageContenu(enfants: [
         Grille(largeurMin: 300, enfants: [

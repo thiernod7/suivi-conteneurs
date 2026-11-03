@@ -49,6 +49,7 @@ class _EcranConteneursState extends State<EcranConteneurs> {
     final tous = SuiviScope.of(context).conteneurs..sort((a, b) => b.conteneur.arrivee.compareTo(a.conteneur.arrivee));
     final visibles = tous.where((c) => _garde(c, _filtre)).toList();
     return Scaffold(
+      floatingActionButton: const BoutonAjouter('Nouveau conteneur', chemin: '/nouveau/conteneur'),
       appBar: AppBar(title: const Text('Conteneurs')),
       body: PageContenu(enfants: [
         BarreRecherche<_Filtre>(

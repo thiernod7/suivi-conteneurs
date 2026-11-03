@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
-import 'domaine/calculs.dart';
+import 'donnees/depot.dart';
 import 'ui/coquille.dart';
 import 'ui/ecrans/accueil.dart';
 import 'ui/ecrans/client.dart';
@@ -10,6 +10,17 @@ import 'ui/ecrans/clients.dart';
 import 'ui/ecrans/conteneur.dart';
 import 'ui/ecrans/conteneurs.dart';
 import 'ui/ecrans/facture.dart';
+import 'ui/ecrans/fournisseurs.dart';
+import 'ui/ecrans/paiements.dart';
+import 'ui/ecrans/plus.dart';
+import 'ui/ecrans/produits.dart';
+import 'ui/ecrans/retours.dart';
+import 'ui/formulaires/client.dart';
+import 'ui/formulaires/conteneur.dart';
+import 'ui/formulaires/facture.dart';
+import 'ui/formulaires/paiement.dart';
+import 'ui/formulaires/produit.dart';
+import 'ui/formulaires/retour.dart';
 import 'ui/ecrans/factures.dart';
 import 'ui/suivi_scope.dart';
 import 'ui/theme.dart';
@@ -40,14 +51,43 @@ GoRouter creerRouteur() => GoRouter(routes: [
               GoRoute(path: ':numero', builder: (_, state) => EcranFacture(numero: state.pathParameters['numero']!)),
             ],
           ),
+          GoRoute(
+            path: '/plus',
+            builder: (_, _) => const EcranPlus(),
+            routes: [
+              GoRoute(path: 'produits', builder: (_, _) => const EcranProduits()),
+              GoRoute(path: 'paiements', builder: (_, _) => const EcranPaiements()),
+              GoRoute(path: 'retours', builder: (_, _) => const EcranRetours()),
+              GoRoute(path: 'fournisseurs', builder: (_, _) => const EcranFournisseurs()),
+            ],
+          ),
         ],
+      ),
+      // Les formulaires d'ajout s'ouvrent en plein écran, par-dessus la barre du bas.
+      GoRoute(path: '/nouveau/conteneur', builder: (_, _) => const FormulaireConteneur()),
+      GoRoute(path: '/nouveau/client', builder: (_, _) => const FormulaireClient()),
+      GoRoute(
+        path: '/nouveau/produit',
+        builder: (_, state) => FormulaireProduit(conteneurId: state.uri.queryParameters['conteneur']),
+      ),
+      GoRoute(
+        path: '/nouveau/facture',
+        builder: (_, state) => FormulaireFacture(clientId: state.uri.queryParameters['client']),
+      ),
+      GoRoute(
+        path: '/nouveau/paiement',
+        builder: (_, state) => FormulairePaiement(facture: state.uri.queryParameters['facture']),
+      ),
+      GoRoute(
+        path: '/nouveau/retour',
+        builder: (_, state) => FormulaireRetour(facture: state.uri.queryParameters['facture']),
       ),
     ]);
 
 class Application extends StatefulWidget {
-  const Application({super.key, required this.suivi});
+  const Application({super.key, required this.depot});
 
-  final Suivi suivi;
+  final Depot depot;
 
   @override
   State<Application> createState() => _ApplicationState();
@@ -58,7 +98,7 @@ class _ApplicationState extends State<Application> {
 
   @override
   Widget build(BuildContext context) => SuiviScope(
-        suivi: widget.suivi,
+        depot: widget.depot,
         child: MaterialApp.router(
           title: 'Mes conteneurs',
           debugShowCheckedModeBanner: false,

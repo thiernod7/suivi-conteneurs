@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../domaine/calculs.dart';
@@ -17,7 +18,8 @@ class PageContenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final marge = MediaQuery.sizeOf(context).width < 600 ? 16.0 : 28.0;
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(marge, 8, marge, 40),
+      // En bas, de la place pour le bouton « + ».
+      padding: EdgeInsets.fromLTRB(marge, 8, marge, 104),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1000),
@@ -459,4 +461,20 @@ class Note extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// Le gros bouton « + » en bas d'une liste, qui ouvre un formulaire d'ajout.
+class BoutonAjouter extends StatelessWidget {
+  const BoutonAjouter(this.texte, {super.key, required this.chemin});
+
+  final String texte;
+  final String chemin;
+
+  @override
+  Widget build(BuildContext context) => FloatingActionButton.extended(
+        heroTag: chemin,
+        onPressed: () => context.push(chemin),
+        icon: const Icon(Symbols.add, weight: 400),
+        label: Text(texte, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+      );
 }

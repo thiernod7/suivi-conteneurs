@@ -17,6 +17,7 @@ const destinations = [
   Destination('/conteneurs', 'Conteneurs', Symbols.package_2),
   Destination('/clients', 'Clients', Symbols.group),
   Destination('/factures', 'Factures', Symbols.receipt_long),
+  Destination('/plus', 'Plus', Symbols.menu),
 ];
 
 /// Cadre commun : barre de boutons en bas sur téléphone, sur le côté sur ordinateur.

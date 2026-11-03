@@ -1,15 +1,16 @@
 import 'package:flutter/widgets.dart';
 
 import '../domaine/calculs.dart';
+import '../donnees/depot.dart';
 
-/// Donne accès au [Suivi] calculé à tous les écrans.
-class SuiviScope extends InheritedWidget {
-  const SuiviScope({super.key, required this.suivi, required super.child});
+/// Donne accès aux données à tous les écrans. Quand on ajoute quelque chose, les écrans se redessinent.
+class SuiviScope extends InheritedNotifier<Depot> {
+  const SuiviScope({super.key, required Depot depot, required super.child}) : super(notifier: depot);
 
-  final Suivi suivi;
+  /// Les chiffres calculés, à afficher.
+  static Suivi of(BuildContext context) => depot(context).suivi;
 
-  static Suivi of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<SuiviScope>()!.suivi;
-
-  @override
-  bool updateShouldNotify(SuiviScope old) => old.suivi != suivi;
+  /// Le dépôt, pour ajouter des données.
+  static Depot depot(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SuiviScope>()!.notifier!;
 }

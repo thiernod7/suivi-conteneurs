@@ -70,6 +70,15 @@ class EcranConteneur extends StatelessWidget {
         Grille(largeurMin: 300, enfants: [
           for (final p in calcul.produits) _CarteProduit(p, couleur: couleurs.conteneur(c.couleur)),
         ]),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            onPressed: () => context.push('/nouveau/produit?conteneur=$id'),
+            icon: const Icon(Symbols.add),
+            label: const Text('Ajouter un produit'),
+          ),
+        ),
         const TitreSection('Clients', icone: Symbols.group),
         CarteListe(lignes: [
           for (final part in calcul.parClient)

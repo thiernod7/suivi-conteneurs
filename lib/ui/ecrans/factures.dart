@@ -62,6 +62,7 @@ class _EcranFacturesState extends State<EcranFactures> {
     final conteneurs = [for (final c in suivi.conteneurs) c.conteneur]..sort((a, b) => b.arrivee.compareTo(a.arrivee));
 
     return Scaffold(
+      floatingActionButton: const BoutonAjouter('Nouvelle facture', chemin: '/nouveau/facture'),
       appBar: AppBar(title: const Text('Factures')),
       body: PageContenu(enfants: [
         BarreRecherche<_Filtre>(
