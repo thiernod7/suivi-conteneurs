@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../domaine/calculs.dart';
 import '../composants.dart';
@@ -20,7 +21,6 @@ class EcranConteneur extends StatelessWidget {
     final calcul = suivi.conteneur(id);
     final c = calcul.conteneur;
     final couleurs = context.couleurs;
-    final muet = Theme.of(context).colorScheme.onSurfaceVariant;
     final gagne = calcul.resultat >= 0;
 
     return Scaffold(
@@ -33,53 +33,53 @@ class EcranConteneur extends StatelessWidget {
         ]),
       ),
       body: PageContenu(enfants: [
-        Wrap(spacing: 12, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
-          Text('${pays(c)} · arrivé le ${date(c.arrivee)}', style: TextStyle(color: muet, fontSize: 16)),
+        Wrap(spacing: 12, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          Text('${pays(c)} · arrivé le ${date(c.arrivee)}', style: TextStyle(color: couleurs.muet, fontSize: 15.5)),
           Chip(
-            avatar: Icon(calcul.provisoire ? Icons.storefront : Icons.done_all, size: 18),
+            avatar: Icon(calcul.provisoire ? Symbols.storefront : Symbols.done_all, size: 18),
             label: Text(calcul.provisoire ? 'En vente' : 'Tout vendu'),
             visualDensity: VisualDensity.compact,
           ),
         ]),
         const SizedBox(height: 14),
         Grille(largeurMin: 180, colonnesMin: 2, enfants: [
-          CaseChiffre(icone: Icons.shopping_cart_outlined, mot: 'Dépensé', montant: court(calcul.cout)),
-          CaseChiffre(icone: Icons.sell_outlined, mot: 'Vendu', montant: court(calcul.ventes)),
+          CaseChiffre(icone: Symbols.shopping_cart, mot: 'Dépensé', montant: court(calcul.cout)),
+          CaseChiffre(icone: Symbols.sell, mot: 'Vendu', montant: court(calcul.ventes)),
           CaseChiffre(
-            icone: Icons.hourglass_bottom,
+            icone: Symbols.hourglass_bottom,
             mot: 'On me doit',
             montant: court(calcul.reste),
             couleur: calcul.reste > 0 ? couleurs.alerte : couleurs.ok,
           ),
           CaseChiffre(
-            icone: gagne ? Icons.trending_up : Icons.trending_down,
+            icone: gagne ? Symbols.trending_up : Symbols.trending_down,
             mot: gagne ? 'Gagné' : 'Perdu',
             montant: court(calcul.resultat.abs()),
             couleur: gagne ? couleurs.ok : couleurs.alerte,
           ),
         ]),
         if (calcul.provisoire && calcul.valeurStock > 0) ...[
-          const SizedBox(height: 10),
-          _Note(
-            icone: Icons.info_outline,
+          const SizedBox(height: 12),
+          Note(
+            icone: Symbols.info,
             texte: 'Pas encore tout vendu. Si tout part : ${calcul.resultatPrevu >= 0 ? 'gagné' : 'perdu'} '
                 '${court(calcul.resultatPrevu.abs())} GNF.',
           ),
         ],
-        const TitreSection('Dedans', icone: Icons.inventory_2_outlined),
+        const TitreSection('Dedans', icone: Symbols.package_2),
         Grille(largeurMin: 300, enfants: [
           for (final p in calcul.produits) _CarteProduit(p, couleur: couleurs.conteneur(c.couleur)),
         ]),
-        const TitreSection('Clients', icone: Icons.people_outline),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(children: [
-            for (final (i, part) in calcul.parClient.indexed) ...[
-              if (i > 0) const Divider(height: 1),
-              LigneClient(client: suivi.client(part.clientId).client, doit: part.doit, statut: part.statut),
-            ],
-          ]),
-        ),
+        const TitreSection('Clients', icone: Symbols.group),
+        CarteListe(lignes: [
+          for (final part in calcul.parClient)
+            LigneClient(
+              client: suivi.client(part.clientId).client,
+              doit: part.doit,
+              statut: part.statut,
+              onTap: () => context.push('/clients/${part.clientId}'),
+            ),
+        ]),
       ]),
     );
   }
@@ -93,59 +93,40 @@ class _CarteProduit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muet = Theme.of(context).colorScheme.onSurfaceVariant;
+    final muet = context.couleurs.muet;
     final recu = p.produit.quantiteRecue;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            IconeDeProduit(p.produit.icone, taille: 40),
+            IconeDeProduit(p.produit.icone, taille: 36),
             const SizedBox(width: 12),
-            Expanded(child: Text(p.produit.nom, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700))),
+            Expanded(child: Text(p.produit.nom, style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w500))),
           ]),
-          const SizedBox(height: 12),
-          BarreVente(part: recu == 0 ? 0 : p.vendu / recu, couleur: couleur),
-          const SizedBox(height: 6),
+          const SizedBox(height: 14),
+          Barre(part: recu == 0 ? 0 : p.vendu / recu, couleur: couleur),
+          const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: Wrap(alignment: WrapAlignment.spaceBetween, spacing: 12, children: [
-              Text('Vendu ${nombre(p.vendu)} / ${nombre(recu)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text('Vendu ${nombre(p.vendu)} / ${nombre(recu)}', style: const TextStyle(fontWeight: FontWeight.w500)),
               Text('Reste ${nombre(p.stock)}', style: TextStyle(color: muet)),
             ]),
           ),
           if (p.rendu > 0) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Row(children: [
-              Icon(Icons.undo, size: 18, color: muet),
+              Icon(Symbols.undo, size: 18, color: muet),
               const SizedBox(width: 4),
-              Text('Rendus ${nombre(p.rendu)}${p.rebut > 0 ? ' · abîmés ${nombre(p.rebut)}' : ''}',
-                  style: TextStyle(color: muet)),
+              Flexible(
+                child: Text('Rendus ${nombre(p.rendu)}${p.rebut > 0 ? ' · abîmés ${nombre(p.rebut)}' : ''}',
+                    style: TextStyle(color: muet)),
+              ),
             ]),
           ],
         ]),
       ),
     );
   }
-}
-
-class _Note extends StatelessWidget {
-  const _Note({required this.icone, required this.texte});
-
-  final IconData icone;
-  final String texte;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(children: [
-          Icon(icone, size: 22),
-          const SizedBox(width: 10),
-          Expanded(child: Text(texte, style: const TextStyle(fontSize: 16))),
-        ]),
-      );
 }

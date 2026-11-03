@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../domaine/calculs.dart';
 
-// Couleurs de l'application : une couleur par conteneur, et trois couleurs de statut
-// toujours accompagnées d'une icône (on ne compte pas sur la couleur seule).
+// Style : fond clair, cartes blanches bordées d'un trait fin, icônes fines,
+// une couleur par conteneur, trois couleurs de statut toujours accompagnées d'une icône.
 
 class Couleurs extends ThemeExtension<Couleurs> {
   const Couleurs({
@@ -11,18 +11,20 @@ class Couleurs extends ThemeExtension<Couleurs> {
     required this.ok,
     required this.attention,
     required this.alerte,
-    required this.okFond,
-    required this.attentionFond,
-    required this.alerteFond,
+    required this.trait,
+    required this.muet,
   });
 
   final List<Color> conteneurs;
   final Color ok;
   final Color attention;
   final Color alerte;
-  final Color okFond;
-  final Color attentionFond;
-  final Color alerteFond;
+
+  /// Traits fins : bordures, séparateurs.
+  final Color trait;
+
+  /// Texte secondaire.
+  final Color muet;
 
   Color conteneur(int rang) => conteneurs[rang % conteneurs.length];
 
@@ -32,30 +34,22 @@ class Couleurs extends ThemeExtension<Couleurs> {
         StatutPaiement.impaye => alerte,
       };
 
-  Color statutFond(StatutPaiement s) => switch (s) {
-        StatutPaiement.solde => okFond,
-        StatutPaiement.partiel => attentionFond,
-        StatutPaiement.impaye => alerteFond,
-      };
-
   static const clair = Couleurs(
-    conteneurs: [Color(0xFFC4532D), Color(0xFF1F7A63), Color(0xFFB7831A), Color(0xFF3B5A9C)],
-    ok: Color(0xFF1E7B3C),
-    attention: Color(0xFF9A6200),
-    alerte: Color(0xFFB3261E),
-    okFond: Color(0xFFDDF0E2),
-    attentionFond: Color(0xFFFBEBCB),
-    alerteFond: Color(0xFFF9DEDC),
+    conteneurs: [Color(0xFFD0603A), Color(0xFF1F8A70), Color(0xFFC6901F), Color(0xFF4565B0)],
+    ok: Color(0xFF1C8046),
+    attention: Color(0xFFB06D00),
+    alerte: Color(0xFFC8372D),
+    trait: Color(0xFFE3E6EA),
+    muet: Color(0xFF6B7480),
   );
 
   static const sombre = Couleurs(
-    conteneurs: [Color(0xFFE06C47), Color(0xFF3DA88C), Color(0xFFE0AA3E), Color(0xFF6C8BD0)],
-    ok: Color(0xFF6CCB86),
-    attention: Color(0xFFF0B54A),
-    alerte: Color(0xFFFF8A80),
-    okFond: Color(0xFF173322),
-    attentionFond: Color(0xFF3A2C0E),
-    alerteFond: Color(0xFF431D1A),
+    conteneurs: [Color(0xFFE5764F), Color(0xFF3DB08F), Color(0xFFE2AE45), Color(0xFF7090DA)],
+    ok: Color(0xFF5BC782),
+    attention: Color(0xFFF2B24C),
+    alerte: Color(0xFFFF7B70),
+    trait: Color(0xFF2A3038),
+    muet: Color(0xFF9AA3AE),
   );
 
   @override
@@ -71,35 +65,76 @@ extension CouleursContexte on BuildContext {
 
 ThemeData theme(Brightness luminosite) {
   final sombre = luminosite == Brightness.dark;
+  final c = sombre ? Couleurs.sombre : Couleurs.clair;
+  final fond = sombre ? const Color(0xFF0F1215) : const Color(0xFFF6F7F9);
+  final surface = sombre ? const Color(0xFF171B20) : Colors.white;
+  final encre = sombre ? const Color(0xFFE8ECF0) : const Color(0xFF161B22);
   final scheme = ColorScheme.fromSeed(
-    seedColor: const Color(0xFF1F5F8B),
+    seedColor: const Color(0xFF1D5C8C),
     brightness: luminosite,
-    surface: sombre ? const Color(0xFF1A1F24) : Colors.white,
+    surface: surface,
+    onSurface: encre,
+    onSurfaceVariant: c.muet,
+    outline: c.trait,
+    outlineVariant: c.trait,
   );
   final base = ThemeData(colorScheme: scheme, useMaterial3: true, fontFamily: 'Lisible');
+  final trait = BorderSide(color: c.trait, width: .8);
   return base.copyWith(
-    scaffoldBackgroundColor: sombre ? const Color(0xFF111417) : const Color(0xFFF2F4F6),
-    // Texte un peu plus grand que d'habitude.
-    textTheme: Typography.englishLike2021.merge(base.textTheme).apply(fontSizeFactor: 1.08),
+    scaffoldBackgroundColor: fond,
+    textTheme: Typography.englishLike2021.merge(base.textTheme).apply(fontSizeFactor: 1.06),
+    iconTheme: IconThemeData(weight: 300, color: encre, size: 24),
+    dividerTheme: DividerThemeData(color: c.trait, thickness: .8, space: 1),
     cardTheme: CardThemeData(
       elevation: 0,
       margin: EdgeInsets.zero,
-      color: scheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: scheme.outlineVariant),
-      ),
+      color: surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: trait),
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: scheme.surface,
+      backgroundColor: fond,
       surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(fontFamily: 'Lisible', fontSize: 22, fontWeight: FontWeight.w700, color: scheme.onSurface),
+      iconTheme: IconThemeData(weight: 300, color: encre),
+      titleTextStyle: TextStyle(fontFamily: 'Lisible', fontSize: 22, fontWeight: FontWeight.w600, color: encre),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      height: 72,
-      labelTextStyle: WidgetStatePropertyAll(base.textTheme.labelLarge!.copyWith(fontWeight: FontWeight.w700)),
+      height: 68,
+      backgroundColor: surface,
+      surfaceTintColor: Colors.transparent,
+      indicatorColor: scheme.primary.withValues(alpha: .1),
+      labelTextStyle: WidgetStateProperty.resolveWith((s) => TextStyle(
+            fontFamily: 'Lisible',
+            fontSize: 13,
+            fontWeight: s.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w400,
+            color: s.contains(WidgetState.selected) ? encre : c.muet,
+          )),
     ),
-    extensions: [sombre ? Couleurs.sombre : Couleurs.clair],
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: surface,
+      indicatorColor: scheme.primary.withValues(alpha: .1),
+      selectedLabelTextStyle: TextStyle(fontFamily: 'Lisible', fontWeight: FontWeight.w600, color: encre),
+      unselectedLabelTextStyle: TextStyle(fontFamily: 'Lisible', color: c.muet),
+    ),
+    chipTheme: ChipThemeData(
+      side: trait,
+      backgroundColor: surface,
+      selectedColor: scheme.primary.withValues(alpha: .1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
+      labelStyle: TextStyle(fontFamily: 'Lisible', fontSize: 15, color: encre),
+      showCheckmark: false,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: surface,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: trait),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: trait),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: scheme.primary, width: 1.2)),
+      hintStyle: TextStyle(color: c.muet),
+    ),
+    extensions: [c],
   );
 }

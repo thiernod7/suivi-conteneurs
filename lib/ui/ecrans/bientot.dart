@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme.dart';
+
 /// Écran pas encore construit.
 class EcranBientot extends StatelessWidget {
   const EcranBientot({super.key, required this.titre, required this.icone});
@@ -9,14 +11,14 @@ class EcranBientot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muet = Theme.of(context).colorScheme.onSurfaceVariant;
+    final muet = context.couleurs.muet;
     return Scaffold(
       appBar: AppBar(title: Text(titre)),
       body: Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icone, size: 64, color: muet),
+          Icon(icone, size: 56, color: muet, weight: 200),
           const SizedBox(height: 12),
-          Text('Bientôt', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: muet)),
+          Text('Bientôt', style: TextStyle(fontSize: 20, color: muet)),
         ]),
       ),
     );

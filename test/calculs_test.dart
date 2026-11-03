@@ -68,4 +68,14 @@ void main() {
     expect(suivi.client('k4').statut, StatutPaiement.impaye);
     expect(suivi.clients.where((k) => k.depasseLimite).map((k) => k.client.nom), ['Fatoumata Camara', 'Mariama Diallo']);
   });
+
+  test('ce qu\'un client a pris dans chaque conteneur', () {
+    final parts = {for (final p in suivi.client('k2').parConteneur) p.conteneurId: p};
+    expect(parts.keys.toSet(), {'C1', 'C2', 'C4'});
+    expect(parts['C1']!.quantites, {'C1-riz': 250, 'C1-huile': 90});
+    expect(parts.values.fold(0, (s, p) => s + p.achete), suivi.client('k2').achete);
+    expect(parts.values.fold(0, (s, p) => s + p.paye), suivi.client('k2').paye);
+    // retour de 20 bidons : Mariama Diallo en garde 180
+    expect(suivi.client('k4').parConteneur.firstWhere((p) => p.conteneurId == 'C1').quantites['C1-huile'], 180);
+  });
 }

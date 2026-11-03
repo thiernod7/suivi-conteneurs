@@ -67,6 +67,9 @@ L'application sera utilisée par des personnes qui lisent peu. Elle doit se comp
 | Dedans | produits du conteneur |
 | Reste | stock |
 | Rendus · abîmés | retours, mise au rebut |
+| Acheté | ce qu'un client a pris (après retours) |
+| Me doit / Je lui dois | ce qu'un client doit / son crédit |
+| Limite · Limite dépassée | limite de crédit |
 
 - **Une icône à côté de chaque mot** et **une couleur pour chaque statut** : vert ✓ Payé, orange En partie, rouge ✗ Pas payé. Jamais la couleur seule.
 - **Les montants en grand**, abrégés : `381,9 M GNF`, `1,07 Md GNF`.
@@ -75,6 +78,12 @@ L'application sera utilisée par des personnes qui lisent peu. Elle doit se comp
 - Un conteneur = un **carré de couleur** et les 6 chiffres qu'on retient (`482113`). Un client = un **rond avec ses initiales**. Un produit = une **petite image** (sac, bidon, carton, pneu…).
 - Police **Lexend**, conçue pour faciliter la lecture. Texte un peu plus grand que d'habitude. L'écran doit rester correct quand le téléphone est réglé en **grand texte**.
 - Interface en **français**. Thème clair et sombre.
+
+### Style
+- Moderne et léger : fond clair, **cartes blanches bordées d'un trait fin** (0,8 px), coins arrondis, beaucoup d'espace.
+- **Icônes fines** : Material Symbols (`material_symbols_icons`), épaisseur 300 ; l'icône du bouton choisi est pleine.
+- Couleur réservée au sens : vert reçu / payé, orange en partie, rouge on me doit / pas payé. Le reste en gris.
+- Montants en demi-gras (Lexend 600), le reste en normal ; « GNF » en petit et en gris.
 
 ## Le projet
 - **Étape 1 — Prototype** : application **Flutter web adaptative** (téléphone et ordinateur), avec des **données d'exemple**, sans serveur. Publiée sur GitHub Pages pour la montrer au client.

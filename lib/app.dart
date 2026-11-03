@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import 'domaine/calculs.dart';
 import 'ui/coquille.dart';
 import 'ui/ecrans/accueil.dart';
 import 'ui/ecrans/bientot.dart';
+import 'ui/ecrans/client.dart';
+import 'ui/ecrans/clients.dart';
 import 'ui/ecrans/conteneur.dart';
 import 'ui/ecrans/conteneurs.dart';
 import 'ui/suivi_scope.dart';
@@ -23,10 +26,16 @@ GoRouter creerRouteur() => GoRouter(routes: [
               GoRoute(path: ':id', builder: (_, state) => EcranConteneur(id: state.pathParameters['id']!)),
             ],
           ),
-          GoRoute(path: '/clients', builder: (_, _) => const EcranBientot(titre: 'Clients', icone: Icons.people_outline)),
+          GoRoute(
+            path: '/clients',
+            builder: (_, _) => const EcranClients(),
+            routes: [
+              GoRoute(path: ':id', builder: (_, state) => EcranClient(id: state.pathParameters['id']!)),
+            ],
+          ),
           GoRoute(
             path: '/factures',
-            builder: (_, _) => const EcranBientot(titre: 'Factures', icone: Icons.receipt_long_outlined),
+            builder: (_, _) => const EcranBientot(titre: 'Factures', icone: Symbols.receipt_long),
           ),
         ],
       ),

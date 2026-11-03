@@ -151,6 +151,34 @@ class CalculClient {
   StatutPaiement get statut => statutPaiement(achete, paye);
   bool get depasseLimite => doit > client.limiteCredit;
   Set<String> get conteneurs => {for (final f in factures) ...f.conteneurs};
+
+  /// Ce que le client a pris dans chaque conteneur, du plus récent au plus ancien achat.
+  List<PartConteneur> get parConteneur {
+    final parts = <String, PartConteneur>{};
+    for (final f in [...factures]..sort((a, b) => b.facture.date.compareTo(a.facture.date))) {
+      for (final l in f.lignes) {
+        final p = parts.putIfAbsent(l.ligne.conteneurId, () => PartConteneur(l.ligne.conteneurId));
+        p.quantites[l.ligne.produitId] = (p.quantites[l.ligne.produitId] ?? 0) + l.quantiteGardee;
+        p.achete += l.net;
+        p.paye += l.encaisse;
+      }
+    }
+    return parts.values.toList();
+  }
+}
+
+class PartConteneur {
+  PartConteneur(this.conteneurId);
+
+  final String conteneurId;
+
+  /// Quantité gardée par produit (après retours).
+  final quantites = <String, int>{};
+  int achete = 0;
+  int paye = 0;
+
+  int get doit => achete - paye;
+  StatutPaiement get statut => statutPaiement(achete, paye);
 }
 
 class Totaux {

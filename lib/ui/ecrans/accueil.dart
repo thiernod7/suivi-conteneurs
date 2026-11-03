@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../composants.dart';
 import '../format.dart';
@@ -25,40 +26,37 @@ class EcranAccueil extends StatelessWidget {
         Grille(largeurMin: 300, enfants: [
           CaseChiffre(
             grand: true,
-            icone: gagne ? Icons.trending_up : Icons.trending_down,
+            icone: gagne ? Symbols.trending_up : Symbols.trending_down,
             mot: gagne ? 'Gagné' : 'Perdu',
             montant: court(t.resultat.abs()),
             couleur: gagne ? c.ok : c.alerte,
           ),
           CaseChiffre(
             grand: true,
-            icone: Icons.hourglass_bottom,
+            icone: Symbols.hourglass_bottom,
             mot: 'On me doit',
             montant: court(t.reste),
             couleur: c.alerte,
           ),
         ]),
         const SizedBox(height: 12),
-        Card(
-          child: Column(children: [
-            LigneChiffre(icone: Icons.shopping_cart_outlined, mot: 'Dépensé', montant: court(t.investi)),
-            const Divider(height: 1),
-            LigneChiffre(icone: Icons.sell_outlined, mot: 'Vendu', montant: court(t.ventes)),
-            const Divider(height: 1),
-            LigneChiffre(icone: Icons.payments_outlined, mot: 'Reçu', montant: court(t.encaisse), couleur: c.ok),
-          ]),
-        ),
-        const TitreSection('Qui me doit ?', icone: Icons.person_search),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(children: [
-            for (final (i, k) in debiteurs.take(3).indexed) ...[
-              if (i > 0) const Divider(height: 1),
-              LigneClient(client: k.client, doit: k.doit, statut: k.statut),
-            ],
-          ]),
-        ),
-        const TitreSection('Mes conteneurs', icone: Icons.inventory_2_outlined),
+        CarteListe(lignes: [
+          LigneChiffre(icone: Symbols.shopping_cart, mot: 'Dépensé', montant: court(t.investi)),
+          LigneChiffre(icone: Symbols.sell, mot: 'Vendu', montant: court(t.ventes)),
+          LigneChiffre(icone: Symbols.payments, mot: 'Reçu', montant: court(t.encaisse), couleur: c.ok),
+        ]),
+        const TitreSection('Qui me doit ?', icone: Symbols.person_search),
+        CarteListe(lignes: [
+          for (final k in debiteurs.take(3))
+            LigneClient(
+              client: k.client,
+              doit: k.doit,
+              statut: k.statut,
+              alerte: k.depasseLimite,
+              onTap: () => context.push('/clients/${k.client.id}'),
+            ),
+        ]),
+        const TitreSection('Mes conteneurs', icone: Symbols.package_2),
         Grille(largeurMin: 420, enfants: [
           for (final cc in conteneurs)
             LigneConteneur(cc, onTap: () => context.push('/conteneurs/${cc.conteneur.id}')),
