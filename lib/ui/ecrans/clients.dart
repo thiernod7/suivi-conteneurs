@@ -4,12 +4,12 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../domaine/calculs.dart';
 import '../composants.dart';
+import '../recherche.dart';
 import '../suivi_scope.dart';
-import '../theme.dart';
 
-enum _Filtre { tous, doivent, payes }
+enum _Filtre { tous, doivent, payes, limite }
 
-/// Les clients : ceux qui doivent le plus d'abord. On peut chercher un nom ou filtrer.
+/// Les clients : ceux qui doivent le plus d'abord. On cherche un nom ou un quartier, on filtre.
 class EcranClients extends StatefulWidget {
   const EcranClients({super.key});
 
@@ -18,67 +18,67 @@ class EcranClients extends StatefulWidget {
 }
 
 class _EcranClientsState extends State<EcranClients> {
+  final _controleur = TextEditingController();
   var _recherche = '';
   var _filtre = _Filtre.tous;
+  String? _conteneur;
 
-  static String _simple(String s) => s
-      .toLowerCase()
-      .replaceAll(RegExp('[àâä]'), 'a')
-      .replaceAll(RegExp('[éèêë]'), 'e')
-      .replaceAll(RegExp('[îï]'), 'i')
-      .replaceAll(RegExp('[ôö]'), 'o')
-      .replaceAll(RegExp('[ùûü]'), 'u');
+  @override
+  void dispose() {
+    _controleur.dispose();
+    super.dispose();
+  }
 
-  bool _garde(CalculClient k) {
-    final ok = switch (_filtre) {
+  bool _garde(CalculClient k, _Filtre f) {
+    final ok = switch (f) {
       _Filtre.tous => true,
       _Filtre.doivent => k.doit > 0,
       _Filtre.payes => k.doit <= 0,
+      _Filtre.limite => k.depasseLimite,
     };
-    return ok && _simple('${k.client.nom} ${k.client.quartier}').contains(_simple(_recherche.trim()));
+    return ok &&
+        (_conteneur == null || k.conteneurs.contains(_conteneur)) &&
+        correspond([k.client.nom, k.client.quartier], _recherche);
   }
+
+  void _toutVoir() => setState(() {
+        _controleur.clear();
+        _recherche = '';
+        _filtre = _Filtre.tous;
+        _conteneur = null;
+      });
 
   @override
   Widget build(BuildContext context) {
     final suivi = SuiviScope.of(context);
-    final tous = suivi.clients..sort((a, b) => b.doit != a.doit ? b.doit.compareTo(a.doit) : a.client.nom.compareTo(b.client.nom));
-    final visibles = tous.where(_garde).toList();
-    final nombre = {
-      _Filtre.tous: tous.length,
-      _Filtre.doivent: tous.where((k) => k.doit > 0).length,
-      _Filtre.payes: tous.where((k) => k.doit <= 0).length,
-    };
-    const libelles = {_Filtre.tous: 'Tous', _Filtre.doivent: 'Me doivent', _Filtre.payes: 'Payé'};
+    final tous = suivi.clients
+      ..sort((a, b) => b.doit != a.doit ? b.doit.compareTo(a.doit) : a.client.nom.compareTo(b.client.nom));
+    final visibles = tous.where((k) => _garde(k, _filtre)).toList();
+    final conteneurs = [for (final c in suivi.conteneurs) c.conteneur]..sort((a, b) => b.arrivee.compareTo(a.arrivee));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Clients')),
       body: PageContenu(enfants: [
-        TextField(
-          onChanged: (v) => setState(() => _recherche = v),
-          decoration: const InputDecoration(
-            prefixIcon: Icon(Symbols.search),
-            hintText: 'Chercher un nom',
-          ),
+        BarreRecherche<_Filtre>(
+          controleur: _controleur,
+          indice: 'Nom ou quartier',
+          onRecherche: (v) => setState(() => _recherche = v),
+          filtres: const [
+            Filtre(_Filtre.tous, 'Tous'),
+            Filtre(_Filtre.doivent, 'Me doivent', icone: Symbols.hourglass_bottom),
+            Filtre(_Filtre.payes, 'Payé', icone: Symbols.check_circle),
+            Filtre(_Filtre.limite, 'Limite dépassée', icone: Symbols.warning),
+          ],
+          filtre: _filtre,
+          nombre: (f) => tous.where((k) => _garde(k, f)).length,
+          onFiltre: (f) => setState(() => _filtre = f),
+          conteneurs: conteneurs,
+          conteneur: _conteneur,
+          onConteneur: (id) => setState(() => _conteneur = id),
         ),
-        const SizedBox(height: 12),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final f in _Filtre.values)
-            ChoiceChip(
-              label: Text('${libelles[f]}  ${nombre[f]}'),
-              selected: _filtre == f,
-              onSelected: (_) => setState(() => _filtre = f),
-            ),
-        ]),
         const SizedBox(height: 16),
         if (visibles.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 48),
-            child: Column(children: [
-              Icon(Symbols.person_off, size: 48, color: context.couleurs.muet, weight: 200),
-              const SizedBox(height: 8),
-              Text('Personne', style: TextStyle(fontSize: 18, color: context.couleurs.muet)),
-            ]),
-          )
+          AucunResultat(icone: Symbols.person_off, texte: 'Personne', onToutVoir: _toutVoir)
         else
           CarteListe(lignes: [
             for (final k in visibles)

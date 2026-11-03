@@ -5,12 +5,13 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../domaine/calculs.dart';
 import '../composants.dart';
 import '../format.dart';
+import '../recherche.dart';
 import '../suivi_scope.dart';
 import '../theme.dart';
 
-enum _Filtre { toutes, aPayer, payees }
+enum _Filtre { toutes, aPayer, enRetard, payees }
 
-/// Les factures, les plus récentes d'abord. On peut chercher un client ou un numéro, ou filtrer.
+/// Les factures, les plus récentes d'abord. On cherche un client, un numéro ou un produit, on filtre.
 class EcranFactures extends StatefulWidget {
   const EcranFactures({super.key});
 
@@ -19,64 +20,70 @@ class EcranFactures extends StatefulWidget {
 }
 
 class _EcranFacturesState extends State<EcranFactures> {
+  final _controleur = TextEditingController();
   var _recherche = '';
   var _filtre = _Filtre.toutes;
+  String? _conteneur;
 
-  static String _simple(String s) => s
-      .toLowerCase()
-      .replaceAll(RegExp('[àâä]'), 'a')
-      .replaceAll(RegExp('[éèêë]'), 'e')
-      .replaceAll(RegExp('[îï]'), 'i')
-      .replaceAll(RegExp('[ôö]'), 'o')
-      .replaceAll(RegExp('[ùûü]'), 'u');
+  @override
+  void dispose() {
+    _controleur.dispose();
+    super.dispose();
+  }
+
+  bool _garde(Suivi suivi, CalculFacture f, _Filtre filtre) {
+    final ok = switch (filtre) {
+      _Filtre.toutes => true,
+      _Filtre.aPayer => f.solde > 0,
+      _Filtre.enRetard => f.solde > 0 && f.age > 30,
+      _Filtre.payees => f.solde == 0,
+    };
+    return ok &&
+        (_conteneur == null || f.conteneurs.contains(_conteneur)) &&
+        correspond([
+          suivi.client(f.facture.clientId).client.nom,
+          f.facture.numero,
+          for (final l in f.lignes) suivi.produit(l.ligne).nom,
+        ], _recherche);
+  }
+
+  void _toutVoir() => setState(() {
+        _controleur.clear();
+        _recherche = '';
+        _filtre = _Filtre.toutes;
+        _conteneur = null;
+      });
 
   @override
   Widget build(BuildContext context) {
     final suivi = SuiviScope.of(context);
     final toutes = suivi.factures..sort((a, b) => b.facture.date.compareTo(a.facture.date));
-    bool aPayer(CalculFacture f) => f.solde > 0;
-    final nombre = {
-      _Filtre.toutes: toutes.length,
-      _Filtre.aPayer: toutes.where(aPayer).length,
-      _Filtre.payees: toutes.where((f) => !aPayer(f)).length,
-    };
-    const libelles = {_Filtre.toutes: 'Toutes', _Filtre.aPayer: 'À payer', _Filtre.payees: 'Payé'};
-    final visibles = toutes.where((f) {
-      final ok = switch (_filtre) {
-        _Filtre.toutes => true,
-        _Filtre.aPayer => aPayer(f),
-        _Filtre.payees => !aPayer(f),
-      };
-      final texte = '${suivi.client(f.facture.clientId).client.nom} ${f.facture.numero}';
-      return ok && _simple(texte).contains(_simple(_recherche.trim()));
-    }).toList();
+    final visibles = toutes.where((f) => _garde(suivi, f, _filtre)).toList();
+    final conteneurs = [for (final c in suivi.conteneurs) c.conteneur]..sort((a, b) => b.arrivee.compareTo(a.arrivee));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Factures')),
       body: PageContenu(enfants: [
-        TextField(
-          onChanged: (v) => setState(() => _recherche = v),
-          decoration: const InputDecoration(prefixIcon: Icon(Symbols.search), hintText: 'Chercher un nom ou un numéro'),
+        BarreRecherche<_Filtre>(
+          controleur: _controleur,
+          indice: 'Nom, numéro ou produit',
+          onRecherche: (v) => setState(() => _recherche = v),
+          filtres: const [
+            Filtre(_Filtre.toutes, 'Toutes'),
+            Filtre(_Filtre.aPayer, 'À payer', icone: Symbols.hourglass_bottom),
+            Filtre(_Filtre.enRetard, 'En retard', icone: Symbols.schedule),
+            Filtre(_Filtre.payees, 'Payé', icone: Symbols.check_circle),
+          ],
+          filtre: _filtre,
+          nombre: (f) => toutes.where((x) => _garde(suivi, x, f)).length,
+          onFiltre: (f) => setState(() => _filtre = f),
+          conteneurs: conteneurs,
+          conteneur: _conteneur,
+          onConteneur: (id) => setState(() => _conteneur = id),
         ),
-        const SizedBox(height: 12),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final f in _Filtre.values)
-            ChoiceChip(
-              label: Text('${libelles[f]}  ${nombre[f]}'),
-              selected: _filtre == f,
-              onSelected: (_) => setState(() => _filtre = f),
-            ),
-        ]),
         const SizedBox(height: 16),
         if (visibles.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 48),
-            child: Column(children: [
-              Icon(Symbols.receipt_long, size: 48, color: context.couleurs.muet, weight: 200),
-              const SizedBox(height: 8),
-              Text('Rien', style: TextStyle(fontSize: 18, color: context.couleurs.muet)),
-            ]),
-          )
+          AucunResultat(icone: Symbols.receipt_long, texte: 'Rien', onToutVoir: _toutVoir)
         else
           CarteListe(lignes: [
             for (final f in visibles) RangFacture(f, onTap: () => context.push('/factures/${f.facture.numero}')),

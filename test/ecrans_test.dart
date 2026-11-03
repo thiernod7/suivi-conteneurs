@@ -58,6 +58,7 @@ void main() {
     await ouvrir(tester, const Size(360, 780));
     await tester.tap(find.text('Conteneurs').last);
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('482113'), 300, scrollable: find.byType(Scrollable).hitTestable().first);
     await tester.tap(find.text('482113'));
     await tester.pumpAndSettle();
     expect(find.text('Conteneur 482113'), findsOneWidget);
@@ -75,10 +76,12 @@ void main() {
     await tester.tap(find.text('Clients').last);
     await tester.pumpAndSettle();
     expect(find.text('Tous  7'), findsOneWidget);
+    await tester.ensureVisible(find.text('Payé  2'));
     await tester.tap(find.text('Payé  2'));
     await tester.pumpAndSettle();
     expect(find.text('Ibrahima Sow'), findsOneWidget);
     expect(find.text('Mariama Diallo'), findsNothing);
+    await tester.ensureVisible(find.text('Tous  7'));
     await tester.tap(find.text('Tous  7'));
     await tester.enterText(find.byType(TextField), 'keita');
     await tester.pumpAndSettle();
@@ -144,9 +147,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Toutes  16'), findsOneWidget);
     expect(find.text('À payer  10'), findsOneWidget);
+    await tester.ensureVisible(find.text('Payé  6'));
     await tester.tap(find.text('Payé  6'));
     await tester.pumpAndSettle();
     expect(find.text('Mariama Diallo'), findsNothing);
+    await tester.ensureVisible(find.text('Toutes  16'));
     await tester.tap(find.text('Toutes  16'));
     await tester.enterText(find.byType(TextField), 'mariama');
     await tester.pumpAndSettle();
@@ -190,5 +195,58 @@ void main() {
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Espèces'), 300, scrollable: find.byType(Scrollable).hitTestable().first);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('conteneurs : chercher un produit, filtrer, tout revoir', (tester) async {
+    await ouvrir(tester, const Size(1400, 1000));
+    await tester.tap(find.text('Conteneurs').last);
+    await tester.pumpAndSettle();
+    expect(find.text('En vente  1'), findsOneWidget);
+    expect(find.text('Tout vendu  3'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'riz');
+    await tester.pumpAndSettle();
+    expect(find.text('482113'), findsOneWidget);
+    expect(find.text('640055'), findsNothing);
+    await tester.enterText(find.byType(TextField), 'zzz');
+    await tester.pumpAndSettle();
+    expect(find.text('Rien'), findsOneWidget);
+    await tester.tap(find.text('Tout voir'));
+    await tester.pumpAndSettle();
+    expect(find.text('640055'), findsOneWidget);
+    await tester.tap(find.text('En vente  1'));
+    await tester.pumpAndSettle();
+    expect(find.text('482113'), findsNothing);
+  });
+
+  testWidgets('clients : filtre par conteneur et limite dépassée', (tester) async {
+    await ouvrir(tester, const Size(1400, 1000));
+    await tester.tap(find.text('Clients').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Limite dépassée  2'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, '603218'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tous  3'), findsOneWidget);
+    expect(find.text('Ibrahima Sow'), findsOneWidget);
+    expect(find.text('Fatoumata Camara'), findsNothing);
+    // Toucher encore le conteneur enlève le filtre.
+    await tester.tap(find.widgetWithText(ChoiceChip, '603218'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tous  7'), findsOneWidget);
+  });
+
+  testWidgets('factures : en retard, par produit, par conteneur', (tester) async {
+    await ouvrir(tester, const Size(1400, 1000));
+    await tester.tap(find.text('Factures').last);
+    await tester.pumpAndSettle();
+    expect(find.text('En retard  6'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'sucre');
+    await tester.pumpAndSettle();
+    expect(find.text('Toutes  3'), findsOneWidget);
+    await tester.tap(find.byTooltip('Effacer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Toutes  16'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, '517390'));
+    await tester.pumpAndSettle();
+    expect(find.text('Toutes  4'), findsOneWidget);
   });
 }

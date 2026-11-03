@@ -49,6 +49,10 @@ On ne la copie pas. On conçoit **nos propres interfaces et notre propre expéri
 - **Clients** : la liste, puis un client (ce qu'il a pris, dans quels conteneurs, ce qu'il doit).
 - **Factures** : la liste, puis une facture (ce qui a été pris, les paiements, ce qui reste à payer).
 - Les rapports (impayés anciens, meilleurs clients, meilleurs produits) viennent sur l'Accueil, pas dans un écran à part.
+- **Recherche et filtres**, les mêmes sur les trois listes (`lib/ui/recherche.dart`) : une case pour chercher (sans tenir compte des majuscules ni des accents), une rangée de filtres avec leur nombre, une rangée de conteneurs (leur carré de couleur ; toucher à nouveau enlève le filtre). Chaque rangée tient sur une ligne et glisse de côté. Si rien ne correspond : « Tout voir » remet tout à zéro.
+  - Conteneurs : numéro, pays, fournisseur ou produit ; Tous / En vente / Tout vendu.
+  - Clients : nom ou quartier ; Tous / Me doivent / Payé / Limite dépassée ; par conteneur.
+  - Factures : nom, numéro ou produit ; Toutes / À payer / En retard (plus de 30 jours) / Payé ; par conteneur.
 
 ## Simplicité : la règle principale
 L'application sera utilisée par des personnes qui lisent peu. Elle doit se comprendre **au premier coup d'œil**.

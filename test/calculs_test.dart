@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:suivi_conteneurs/domaine/calculs.dart';
 import 'package:suivi_conteneurs/donnees/exemple.dart';
+import 'package:suivi_conteneurs/ui/recherche.dart';
 
 void main() {
   final suivi = Suivi(donneesExemple, aujourdhuiExemple);
@@ -77,5 +78,12 @@ void main() {
     expect(parts.values.fold(0, (s, p) => s + p.paye), suivi.client('k2').paye);
     // retour de 20 bidons : Mariama Diallo en garde 180
     expect(suivi.client('k4').parConteneur.firstWhere((p) => p.conteneurId == 'C1').quantites['C1-huile'], 180);
+  });
+
+  test('recherche sans majuscules ni accents', () {
+    expect(correspond(['Moussa Keïta'], 'KEITA'), isTrue);
+    expect(correspond(['Aïssatou Barry', 'Madina Dispensaire'], 'dispensaire'), isTrue);
+    expect(correspond(['Ibrahima Sow'], 'diallo'), isFalse);
+    expect(correspond(['Ibrahima Sow'], '  '), isTrue);
   });
 }
