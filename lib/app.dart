@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
-import 'package:material_symbols_icons/symbols.dart';
 
 import 'domaine/calculs.dart';
 import 'ui/coquille.dart';
 import 'ui/ecrans/accueil.dart';
-import 'ui/ecrans/bientot.dart';
 import 'ui/ecrans/client.dart';
 import 'ui/ecrans/clients.dart';
 import 'ui/ecrans/conteneur.dart';
 import 'ui/ecrans/conteneurs.dart';
+import 'ui/ecrans/facture.dart';
+import 'ui/ecrans/factures.dart';
 import 'ui/suivi_scope.dart';
 import 'ui/theme.dart';
 
@@ -35,7 +35,10 @@ GoRouter creerRouteur() => GoRouter(routes: [
           ),
           GoRoute(
             path: '/factures',
-            builder: (_, _) => const EcranBientot(titre: 'Factures', icone: Symbols.receipt_long),
+            builder: (_, _) => const EcranFactures(),
+            routes: [
+              GoRoute(path: ':numero', builder: (_, state) => EcranFacture(numero: state.pathParameters['numero']!)),
+            ],
           ),
         ],
       ),

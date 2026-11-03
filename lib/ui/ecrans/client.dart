@@ -9,6 +9,7 @@ import '../format.dart';
 import '../illustrations/produits.dart';
 import '../suivi_scope.dart';
 import '../theme.dart';
+import 'factures.dart';
 
 /// Un client : ce qu'il a acheté, ce qu'il a payé, ce qu'il doit, et ce qu'il a pris dans chaque conteneur.
 class EcranClient extends StatelessWidget {
@@ -61,7 +62,10 @@ class EcranClient extends StatelessWidget {
                 onTap: () => context.push('/conteneurs/${part.conteneurId}')),
         ]),
         const TitreSection('Ses factures', icone: Symbols.receipt_long),
-        CarteListe(lignes: [for (final f in factures) _LigneFacture(f, suivi)]),
+        CarteListe(lignes: [
+          for (final f in factures)
+            RangFacture(f, avecClient: false, onTap: () => context.push('/factures/${f.facture.numero}')),
+        ]),
       ]),
     );
   }
@@ -147,41 +151,6 @@ class _CartePart extends StatelessWidget {
           ]),
         ),
       ),
-    );
-  }
-}
-
-class _LigneFacture extends StatelessWidget {
-  const _LigneFacture(this.f, this.suivi);
-
-  final CalculFacture f;
-  final Suivi suivi;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.couleurs;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(children: [
-        Icon(Symbols.receipt_long, color: c.muet),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(f.facture.numero.substring(4), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 2),
-            Wrap(spacing: 10, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-              Text(date(f.facture.date), style: TextStyle(color: c.muet, fontSize: 14)),
-              for (final id in f.conteneurs) PuceConteneur(suivi.conteneur(id).conteneur),
-            ]),
-          ]),
-        ),
-        const SizedBox(width: 8),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(court(f.net), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 4),
-          StatutBadge(f.statut),
-        ]),
-      ]),
     );
   }
 }

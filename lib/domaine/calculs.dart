@@ -250,6 +250,10 @@ class Suivi {
   CalculClient client(String id) => _clients[id]!;
   CalculFacture facture(String numero) => _factures[numero]!;
 
+  /// Le produit d'une ligne de facture.
+  Produit produit(LigneFacture l) =>
+      _conteneurs[l.conteneurId]!.conteneur.produits.firstWhere((p) => p.id == l.produitId);
+
   Totaux get totaux => Totaux(
         investi: conteneurs.fold(0, (s, c) => s + c.cout),
         ventes: conteneurs.fold(0, (s, c) => s + c.ventes),

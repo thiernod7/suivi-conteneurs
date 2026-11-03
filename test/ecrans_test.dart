@@ -127,4 +127,68 @@ void main() {
         scrollable: find.byType(Scrollable).hitTestable().first);
     expect(tester.takeException(), isNull);
   });
+
+  Future<void> ouvrirFacture(WidgetTester tester, String numero, {Size taille = const Size(390, 844)}) async {
+    await ouvrir(tester, taille);
+    await tester.tap(find.text('Factures').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), numero);
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining(numero).last);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('factures : filtres et recherche', (tester) async {
+    await ouvrir(tester, const Size(390, 844));
+    await tester.tap(find.text('Factures').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Toutes  16'), findsOneWidget);
+    expect(find.text('À payer  10'), findsOneWidget);
+    await tester.tap(find.text('Payé  6'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mariama Diallo'), findsNothing);
+    await tester.tap(find.text('Toutes  16'));
+    await tester.enterText(find.byType(TextField), 'mariama');
+    await tester.pumpAndSettle();
+    expect(find.text('Mariama Diallo'), findsNWidgets(3));
+  });
+
+  testWidgets('facture à deux conteneurs, payée en partie', (tester) async {
+    await ouvrirFacture(tester, '2026-008');
+    expect(find.text('Facture 2026-008'), findsOneWidget);
+    expect(find.text('Fatoumata Camara'), findsOneWidget);
+    expect(find.text('À payer'), findsNWidgets(2));
+    expect(find.textContaining('26,0 M', findRichText: true), findsNWidgets(2));
+    await tester.scrollUntilVisible(find.text('Orange Money'), 300, scrollable: find.byType(Scrollable).hitTestable().first);
+    expect(find.text('Huile végétale 20 L'), findsOneWidget);
+    expect(find.text('Tomate concentrée'), findsOneWidget);
+  });
+
+  testWidgets('facture avec retour, rien reçu', (tester) async {
+    await ouvrirFacture(tester, '2026-005');
+    expect(find.text('Retours'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Rien reçu'), 300, scrollable: find.byType(Scrollable).hitTestable().first);
+    expect(find.text('Rendus 20'), findsOneWidget);
+  });
+
+  testWidgets('facture payée avant un retour : « Je lui dois »', (tester) async {
+    await ouvrirFacture(tester, '2026-011', taille: const Size(1400, 1000));
+    expect(find.text('Je lui dois'), findsOneWidget);
+    expect(find.text('Rendus · abîmés 10'), findsOneWidget);
+  });
+
+  testWidgets('factures en grand texte (+30 %) : rien ne déborde', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await ouvrir(tester, const Size(360, 780));
+    await tester.tap(find.text('Factures').last);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.enterText(find.byType(TextField), '2026-013');
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('2026-013').last);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Espèces'), 300, scrollable: find.byType(Scrollable).hitTestable().first);
+    expect(tester.takeException(), isNull);
+  });
 }

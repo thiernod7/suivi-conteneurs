@@ -70,6 +70,9 @@ L'application sera utilisée par des personnes qui lisent peu. Elle doit se comp
 | Acheté | ce qu'un client a pris (après retours) |
 | Me doit / Je lui dois | ce qu'un client doit / son crédit |
 | Limite · Limite dépassée | limite de crédit |
+| À payer | ce qui reste à payer sur une facture |
+| Montant · Retours · Reçu | le compte d'une facture : montant − retours − reçu = à payer |
+| 92 jours | âge d'une facture pas encore payée (en rouge au-delà de 30 jours) |
 
 - **Une icône à côté de chaque mot** et **une couleur pour chaque statut** : vert ✓ Payé, orange En partie, rouge ✗ Pas payé. Jamais la couleur seule.
 - **Les montants en grand**, abrégés : `381,9 M GNF`, `1,07 Md GNF`.
