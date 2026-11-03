@@ -44,21 +44,37 @@ Le client utilisait **Invoice Manager**, une application de facturation. Elle se
 On ne la copie pas. On conçoit **nos propres interfaces et notre propre expérience utilisateur**, pensées pour ce besoin, avec le **conteneur au centre** de tout.
 
 ## Écrans attendus
-- **Tableau de bord** : totaux (investi, ventes, encaissé, reste à percevoir, résultat).
-- **Conteneurs** : la liste, puis le détail d'un conteneur (coûts, produits reçu / vendu / stock, clients servis et ce qu'ils doivent).
-- **Clients** : la liste, puis le détail d'un client (conteneurs reçus, factures, ce qu'il doit).
-- **Client dans un conteneur** : ce que ce client a pris dans ce conteneur, produit par produit.
-- **Factures** : la liste et l'aperçu d'une facture (lignes, paiements, avoirs, solde).
-- **Rapports** : impayés par ancienneté, meilleurs clients, meilleurs produits.
-- Un **fil d'Ariane** (ex. `Conteneurs › MDNU 482113 0 › Fatoumata Camara`) pour savoir où l'on est et revenir en arrière.
+- **Accueil** : gagné ou perdu, ce qu'on me doit, qui me doit le plus, mes conteneurs.
+- **Conteneurs** : la liste, puis un conteneur (dépensé, vendu, on me doit, gagné ; ce qu'il y a dedans ; ses clients).
+- **Clients** : la liste, puis un client (ce qu'il a pris, dans quels conteneurs, ce qu'il doit).
+- **Factures** : la liste, puis une facture (ce qui a été pris, les paiements, ce qui reste à payer).
+- Les rapports (impayés anciens, meilleurs clients, meilleurs produits) viennent sur l'Accueil, pas dans un écran à part.
 
-## Présentation
-- Interface entièrement en **français**.
-- Montants en **francs guinéens (GNF)**, format français : `1 250 000 GNF`, abrégé `1,3 M` / `1,25 Md`.
-- Une **couleur par conteneur**, partout où il apparaît.
-- Couleurs de statut : **vert** (soldé), **orange** (partiel), **rouge** (impayé).
-- Des **illustrations et icônes** pour rendre le concept facile à comprendre : bateau, conteneurs, camions, produits (sac, bidon, carton, pneu, batterie…), personnages pour les clients.
-- Thème clair et sombre.
+## Simplicité : la règle principale
+L'application sera utilisée par des personnes qui lisent peu. Elle doit se comprendre **au premier coup d'œil**.
+- **Peu de mots**, des mots de tous les jours. Pas de phrases d'explication. Un titre court par écran.
+- **Toujours le même mot pour la même chose** :
+
+| On écrit | Pour dire |
+|---|---|
+| Dépensé | coût du conteneur |
+| Vendu | ventes |
+| Reçu | argent encaissé |
+| On me doit | reste à percevoir |
+| Gagné / Perdu | résultat (jamais un montant négatif : on écrit « Perdu » et le montant) |
+| Payé / En partie / Pas payé | statut de paiement |
+| En vente / Tout vendu | statut du conteneur |
+| Dedans | produits du conteneur |
+| Reste | stock |
+| Rendus · abîmés | retours, mise au rebut |
+
+- **Une icône à côté de chaque mot** et **une couleur pour chaque statut** : vert ✓ Payé, orange En partie, rouge ✗ Pas payé. Jamais la couleur seule.
+- **Les montants en grand**, abrégés : `381,9 M GNF`, `1,07 Md GNF`.
+- **Gros boutons**, faciles à toucher. 4 boutons de navigation seulement : Accueil, Conteneurs, Clients, Factures.
+- Un **bouton retour** en haut de chaque écran de détail.
+- Un conteneur = un **carré de couleur** et les 6 chiffres qu'on retient (`482113`). Un client = un **rond avec ses initiales**. Un produit = une **petite image** (sac, bidon, carton, pneu…).
+- Police **Lexend**, conçue pour faciliter la lecture. Texte un peu plus grand que d'habitude. L'écran doit rester correct quand le téléphone est réglé en **grand texte**.
+- Interface en **français**. Thème clair et sombre.
 
 ## Le projet
 - **Étape 1 — Prototype** : application **Flutter web adaptative** (téléphone et ordinateur), avec des **données d'exemple**, sans serveur. Publiée sur GitHub Pages pour la montrer au client.
@@ -73,6 +89,6 @@ Python, Django, FastAPI, React.js, React Native, Tailwind CSS. Pour ce projet : 
 ## Organisation du code
 - `lib/domaine/` : modèles et calculs, en Dart pur, sans interface. Les écrans ne font qu'afficher ce que `Suivi` a calculé.
 - `lib/donnees/exemple.dart` : données d'exemple du prototype.
-- `lib/ui/` : écrans, thème (`Couleurs` : une couleur par conteneur, couleurs de statut), illustrations dessinées avec `CustomPainter`.
-- Tests : `flutter test`. Analyse : `flutter analyze`. Les deux doivent passer avant de pousser.
+- `lib/ui/` : écrans, thème (`Couleurs` : une couleur par conteneur, couleurs de statut), composants communs (`composants.dart`), images des produits.
+- Tests : `flutter test` (calculs, écrans sur ordinateur, téléphone et grand texte). Analyse : `flutter analyze`. Les deux doivent passer avant de pousser.
 - Mise en page adaptative : barre de navigation en bas sous 760 px de large, rail sur le côté au-delà.

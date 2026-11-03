@@ -1,6 +1,5 @@
-Big Shoulders Display, IBM Plex Sans et IBM Plex Mono sont distribuées sous la licence SIL Open Font License 1.1.
-Copyright The Big Shoulders Project Authors (https://github.com/xotypeco/big_shoulders)
-Copyright IBM Corp. (https://github.com/IBM/plex)
+Lexend est distribuée sous la licence SIL Open Font License 1.1.
+Copyright 2018 The Lexend Project Authors (https://github.com/googlefonts/lexend)
 
 SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
 

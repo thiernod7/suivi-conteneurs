@@ -23,7 +23,7 @@ lib/
   domaine/modeles.dart     ce qu'on enregistre : conteneurs, clients, factures, paiements, avoirs
   domaine/calculs.dart     les calculs du cahier des charges (ventes, encaissé, résultat, stock…)
   donnees/exemple.dart     les données d'exemple du prototype
-  ui/                      les écrans, le thème, les illustrations
+  ui/                      les écrans, le thème, les images des produits
 test/                      tests des calculs et des écrans
 ```
 

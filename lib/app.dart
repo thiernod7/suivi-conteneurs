@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import 'domaine/calculs.dart';
 import 'ui/coquille.dart';
-import 'ui/ecrans/a_venir.dart';
 import 'ui/ecrans/accueil.dart';
+import 'ui/ecrans/bientot.dart';
+import 'ui/ecrans/conteneur.dart';
 import 'ui/ecrans/conteneurs.dart';
 import 'ui/suivi_scope.dart';
 import 'ui/theme.dart';
@@ -15,30 +16,17 @@ GoRouter creerRouteur() => GoRouter(routes: [
         builder: (context, state, enfant) => Coquille(chemin: state.uri.path, enfant: enfant),
         routes: [
           GoRoute(path: '/', builder: (_, _) => const EcranAccueil()),
-          GoRoute(path: '/conteneurs', builder: (_, _) => const EcranConteneurs()),
           GoRoute(
-            path: '/clients',
-            builder: (_, _) => const EcranAVenir(titre: 'Clients', icone: Icons.storefront_outlined, contenu: [
-              'la liste des commerçants, ce qu\'ils ont acheté, payé et ce qu\'ils doivent encore ;',
-              'les conteneurs dont chacun a reçu des produits ;',
-              'une alerte quand un client dépasse sa limite de crédit.',
-            ]),
+            path: '/conteneurs',
+            builder: (_, _) => const EcranConteneurs(),
+            routes: [
+              GoRoute(path: ':id', builder: (_, state) => EcranConteneur(id: state.pathParameters['id']!)),
+            ],
           ),
+          GoRoute(path: '/clients', builder: (_, _) => const EcranBientot(titre: 'Clients', icone: Icons.people_outline)),
           GoRoute(
             path: '/factures',
-            builder: (_, _) => const EcranAVenir(titre: 'Factures', icone: Icons.receipt_long_outlined, contenu: [
-              'les factures, avec pour chaque ligne le conteneur d\'où vient le produit ;',
-              'les paiements reçus, en une ou plusieurs fois, et le solde ;',
-              'les retours et remises (avoirs).',
-            ]),
-          ),
-          GoRoute(
-            path: '/rapports',
-            builder: (_, _) => const EcranAVenir(titre: 'Rapports', icone: Icons.bar_chart_outlined, contenu: [
-              'les impayés selon leur ancienneté ;',
-              'les meilleurs clients et les meilleurs produits ;',
-              'le résultat de chaque conteneur.',
-            ]),
+            builder: (_, _) => const EcranBientot(titre: 'Factures', icone: Icons.receipt_long_outlined),
           ),
         ],
       ),
@@ -60,7 +48,7 @@ class _ApplicationState extends State<Application> {
   Widget build(BuildContext context) => SuiviScope(
         suivi: widget.suivi,
         child: MaterialApp.router(
-          title: 'Suivi des conteneurs',
+          title: 'Mes conteneurs',
           debugShowCheckedModeBanner: false,
           theme: theme(Brightness.light),
           darkTheme: theme(Brightness.dark),

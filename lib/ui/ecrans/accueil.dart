@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../domaine/calculs.dart';
 import '../composants.dart';
 import '../format.dart';
-import '../illustrations/port.dart';
 import '../suivi_scope.dart';
 import '../theme.dart';
 
-/// Tableau de bord : l'histoire en une image, les totaux, puis les conteneurs.
+/// L'essentiel en un coup d'œil : ce que j'ai gagné, ce qu'on me doit, qui me doit, mes conteneurs.
 class EcranAccueil extends StatelessWidget {
   const EcranAccueil({super.key});
 
@@ -15,64 +14,56 @@ class EcranAccueil extends StatelessWidget {
   Widget build(BuildContext context) {
     final suivi = SuiviScope.of(context);
     final t = suivi.totaux;
-    final muet = Theme.of(context).colorScheme.onSurfaceVariant;
-    return PageContenu(enfants: [
-      Wrap(
-        alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.end,
-        spacing: 16,
-        runSpacing: 8,
-        children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Etiquette('Marché de Madina · Conakry'),
-            const SizedBox(height: 6),
-            Text('DU BATEAU\nAU CLIENT', style: Theme.of(context).textTheme.displaySmall),
+    final c = context.couleurs;
+    final gagne = t.resultat >= 0;
+    final debiteurs = suivi.clients.where((k) => k.doit > 0).toList()..sort((a, b) => b.doit.compareTo(a.doit));
+    final conteneurs = [...suivi.conteneurs]..sort((a, b) => b.conteneur.arrivee.compareTo(a.conteneur.arrivee));
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Accueil')),
+      body: PageContenu(enfants: [
+        Grille(largeurMin: 300, enfants: [
+          CaseChiffre(
+            grand: true,
+            icone: gagne ? Icons.trending_up : Icons.trending_down,
+            mot: gagne ? 'Gagné' : 'Perdu',
+            montant: court(t.resultat.abs()),
+            couleur: gagne ? c.ok : c.alerte,
+          ),
+          CaseChiffre(
+            grand: true,
+            icone: Icons.hourglass_bottom,
+            mot: 'On me doit',
+            montant: court(t.reste),
+            couleur: c.alerte,
+          ),
+        ]),
+        const SizedBox(height: 12),
+        Card(
+          child: Column(children: [
+            LigneChiffre(icone: Icons.shopping_cart_outlined, mot: 'Dépensé', montant: court(t.investi)),
+            const Divider(height: 1),
+            LigneChiffre(icone: Icons.sell_outlined, mot: 'Vendu', montant: court(t.ventes)),
+            const Divider(height: 1),
+            LigneChiffre(icone: Icons.payments_outlined, mot: 'Reçu', montant: court(t.encaisse), couleur: c.ok),
           ]),
-          Text('Situation au ${date(suivi.aujourdhui)} · données d\'exemple', style: TextStyle(color: muet)),
-        ],
-      ),
-      const SizedBox(height: 20),
-      Card(clipBehavior: Clip.antiAlias, child: ScenePort(nombreConteneurs: suivi.conteneurs.length)),
-      const SizedBox(height: 20),
-      Grille(largeurMin: 190, colonnesMin: 2, enfants: [
-        Indicateur(
-          etiquette: 'Investi',
-          valeur: court(t.investi),
-          detail: '${suivi.conteneurs.length} conteneurs',
         ),
-        Indicateur(etiquette: 'Ventes', valeur: court(t.ventes), detail: 'après retours et remises'),
-        Indicateur(
-          etiquette: 'Encaissé',
-          valeur: court(t.encaisse),
-          detail: '${pourcent(t.encaisse / t.ventes)} des ventes',
+        const TitreSection('Qui me doit ?', icone: Icons.person_search),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(children: [
+            for (final (i, k) in debiteurs.take(3).indexed) ...[
+              if (i > 0) const Divider(height: 1),
+              LigneClient(client: k.client, doit: k.doit, statut: k.statut),
+            ],
+          ]),
         ),
-        Indicateur(
-          etiquette: 'Reste à percevoir',
-          valeur: court(t.reste),
-          detail: '${suivi.clients.where((k) => k.doit > 0).length} clients doivent encore',
-          couleur: context.couleurs.alerte,
-        ),
-        Indicateur(
-          etiquette: 'Résultat à ce jour',
-          valeur: signe(t.resultat),
-          detail: 'ventes − coûts des conteneurs',
-          couleur: t.resultat >= 0 ? context.couleurs.ok : context.couleurs.alerte,
-        ),
+        const TitreSection('Mes conteneurs', icone: Icons.inventory_2_outlined),
+        Grille(largeurMin: 420, enfants: [
+          for (final cc in conteneurs)
+            LigneConteneur(cc, onTap: () => context.push('/conteneurs/${cc.conteneur.id}')),
+        ]),
       ]),
-      TitreSection('Conteneurs', detail: 'Du plus récent au plus ancien'),
-      ListeConteneurs(suivi.conteneurs),
-    ]);
-  }
-}
-
-class ListeConteneurs extends StatelessWidget {
-  const ListeConteneurs(this.conteneurs, {super.key});
-
-  final List<CalculConteneur> conteneurs;
-
-  @override
-  Widget build(BuildContext context) {
-    final tries = [...conteneurs]..sort((a, b) => b.conteneur.arrivee.compareTo(a.conteneur.arrivee));
-    return Grille(largeurMin: 420, espace: 14, enfants: [for (final c in tries) CarteConteneur(c)]);
+    );
   }
 }

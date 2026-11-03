@@ -111,14 +111,30 @@ class CalculConteneur {
 
   Set<String> get clients => {for (final l in lignes) l.facture.clientId};
 
-  /// Clients qui doivent encore quelque chose sur ce conteneur.
-  int get clientsEnRetard {
-    final du = <String, int>{};
+  /// Ce que chaque client a pris dans ce conteneur et ce qu'il en a payé, ceux qui doivent le plus d'abord.
+  List<PartClient> get parClient {
+    final parts = <String, PartClient>{};
     for (final l in lignes) {
-      du[l.facture.clientId] = (du[l.facture.clientId] ?? 0) + l.net - l.encaisse;
+      final p = parts.putIfAbsent(l.facture.clientId, () => PartClient(l.facture.clientId));
+      p.achete += l.net;
+      p.paye += l.encaisse;
     }
-    return du.values.where((v) => v > 0).length;
+    return parts.values.toList()..sort((a, b) => b.doit.compareTo(a.doit));
   }
+
+  /// Clients qui doivent encore quelque chose sur ce conteneur.
+  int get clientsEnRetard => parClient.where((p) => p.doit > 0).length;
+}
+
+class PartClient {
+  PartClient(this.clientId);
+
+  final String clientId;
+  int achete = 0;
+  int paye = 0;
+
+  int get doit => achete - paye;
+  StatutPaiement get statut => statutPaiement(achete, paye);
 }
 
 class CalculClient {
